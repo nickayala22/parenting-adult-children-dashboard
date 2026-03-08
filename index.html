@@ -363,8 +363,7 @@ header {
   <header>
     <div class="header-left">
       <div class="logo-row">
-        <div class="logo-mark">P</div>
-        <div class="header-title">Parenting Adult Children Today</div>
+        <img src="https://nickayala22.github.io/parenting-adult-children-dashboard/parenting+adult+children+today+logo.webp" alt="PACT Logo" style="height:44px;width:auto;object-fit:contain;">
       </div>
       <div class="header-sub">Command Center &nbsp;·&nbsp; <span id="data-status">Loading live data...</span></div>
     </div>
@@ -392,6 +391,7 @@ header {
     <button class="tab active" onclick="switchTab(this,'overview')">Overview</button>
     <button class="tab" onclick="switchTab(this,'webinar')">Webinar <span class="source-badge source-live" style="margin-left:6px">Live</span></button>
     <button class="tab" onclick="switchTab(this,'ads')">Meta Ads <span class="source-badge source-live" style="margin-left:6px">Live</span></button>
+    <button class="tab" onclick="switchTab(this,'ghl')">Pipeline <span class="source-badge source-live" style="margin-left:6px">GHL</span></button>
   </div>
 
   <div id="errorBanner" class="error-banner"></div>
@@ -661,6 +661,65 @@ header {
         <div class="kpi-value" id="meta-purchases">—</div>
         <div class="kpi-delta delta-neutral">Tracked conversions</div>
       </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ GHL PIPELINE ═══ -->
+  <div class="panel" id="panel-ghl">
+
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="kpi">
+        <div class="kpi-label">Total Opportunities <span class="source-badge source-live">GHL</span></div>
+        <div class="kpi-value plum" id="ghl-total">—</div>
+        <div class="kpi-delta delta-neutral">Sales Pipeline (A&B)</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Won <span class="source-badge source-live">GHL</span></div>
+        <div class="kpi-value green" id="ghl-won-count">—</div>
+        <div class="kpi-delta delta-neutral" id="ghl-won-value">$—</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Booked Calls <span class="source-badge source-live">GHL</span></div>
+        <div class="kpi-value" id="ghl-booked">—</div>
+        <div class="kpi-delta delta-neutral" id="ghl-booked-today">— today</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">New Contacts <span class="source-badge source-live">GHL</span></div>
+        <div class="kpi-value" id="ghl-contacts">—</div>
+        <div class="kpi-delta delta-neutral">Last 30 days</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px;">
+
+      <!-- Stage breakdown -->
+      <div class="card">
+        <div class="card-title">Pipeline Stage Breakdown <span class="source-badge source-live">GHL Live</span></div>
+        <div id="ghlStages" style="margin-top:8px;">
+          <div style="color:var(--text-muted);font-size:11px;">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Stage donut -->
+      <div class="card">
+        <div class="card-title">Stage Distribution</div>
+        <div class="chart-wrap" style="height:280px;">
+          <canvas id="ghlStageChart"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Recent appointments -->
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title">Upcoming Booked Calls <span class="source-badge source-live">GHL Live</span></div>
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Time</th><th>Status</th></tr></thead>
+        <tbody id="ghlApptsTable">
+          <tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
+        </tbody>
+      </table>
     </div>
 
   </div>
@@ -1065,10 +1124,116 @@ function renderMetaData(d) {
   }
 }
 
+// ── FETCH GHL ──
+async function fetchGHL() {
+  try {
+    const controller = new AbortController();
+    const timeout    = setTimeout(() => controller.abort(), 12000);
+    const res  = await fetch(`${WORKER_URL}/ghl/summary`, { signal: controller.signal });
+    clearTimeout(timeout);
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      setText('ghl-total', 'Error');
+      return;
+    }
+    renderGHLData(data);
+  } catch(err) {
+    setText('ghl-total', err.name === 'AbortError' ? 'Timeout' : 'Error');
+  }
+}
+
+// ── RENDER GHL ──
+function renderGHLData(d) {
+  const { pipeline, stages, won, bookedCalls, recentAppts, newContacts } = d;
+
+  setText('ghl-total',        pipeline.total);
+  setText('ghl-won-count',    won.count);
+  setText('ghl-won-value',    formatMoney(won.value));
+  setText('ghl-booked',       bookedCalls.total);
+  setText('ghl-booked-today', `${bookedCalls.today} today`);
+  setText('ghl-contacts',     newContacts);
+
+  // Stage bars
+  const stageOrder = ['New Appointment','Reschedule','No Show','Cancelled','Follow Up','Disqualified','Won','Lost'];
+  const stageColors = {
+    'New Appointment': 'var(--plum)',
+    'Reschedule':      'var(--amber)',
+    'No Show':         'var(--rose)',
+    'Cancelled':       'var(--red)',
+    'Follow Up':       'var(--plum-light)',
+    'Disqualified':    'var(--text-muted)',
+    'Won':             'var(--green)',
+    'Lost':            'var(--red)',
+  };
+
+  const total  = pipeline.total || 1;
+  const stagesEl = document.getElementById('ghlStages');
+  if (stagesEl) {
+    stagesEl.innerHTML = stageOrder.map(name => {
+      const s    = stages[name] || { count: 0, value: 0 };
+      const pct  = Math.round(s.count / total * 100);
+      const color = stageColors[name] || 'var(--plum)';
+      return `
+        <div class="funnel-step" style="margin-bottom:10px;">
+          <div class="funnel-label-row">
+            <span class="funnel-name">${name}</span>
+            <div class="funnel-nums">
+              <span class="funnel-count">${s.count}</span>
+              <span class="funnel-pct">${pct}%</span>
+              ${s.value > 0 ? `<span style="color:var(--green);margin-left:8px;font-size:10px;">${formatMoney(s.value)}</span>` : ''}
+            </div>
+          </div>
+          <div class="funnel-bar-bg">
+            <div class="funnel-bar" style="width:${Math.max(pct,1)}%;background:${color};opacity:0.75;"></div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Stage donut
+  if (charts.ghlStage) charts.ghlStage.destroy();
+  const gCtx = document.getElementById('ghlStageChart');
+  if (gCtx) {
+    const labels = stageOrder.filter(n => (stages[n]?.count || 0) > 0);
+    const values = labels.map(n => stages[n]?.count || 0);
+    const colors = labels.map(n => stageColors[n] || 'rgba(162,112,208,0.6)');
+    charts.ghlStage = new Chart(gCtx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{ data: values, backgroundColor: colors.map(c => c.replace('var(--plum)', 'rgba(162,112,208,0.75)').replace('var(--green)', 'rgba(126,220,176,0.75)').replace('var(--rose)', 'rgba(232,164,184,0.75)').replace('var(--red)', 'rgba(224,120,120,0.75)').replace('var(--amber)', 'rgba(232,192,112,0.75)').replace('var(--plum-light)', 'rgba(196,158,232,0.75)').replace('var(--text-muted)', 'rgba(94,84,112,0.75)')), borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { color: '#ede8f5', font: { size: 10 }, boxWidth: 12 } } },
+        cutout: '55%'
+      }
+    });
+  }
+
+  // Appointments table
+  const tbody = document.getElementById('ghlApptsTable');
+  if (tbody) {
+    if (!recentAppts || recentAppts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">No upcoming appointments found</td></tr>';
+    } else {
+      tbody.innerHTML = recentAppts.map(a => {
+        const dt = a.startTime ? new Date(a.startTime).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+        return `<tr>
+          <td style="font-weight:500;">${a.name}</td>
+          <td style="color:var(--text-muted);">${dt}</td>
+          <td style="color:var(--plum-light);">${a.status || '—'}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+}
+
 // ── LOAD ALL ──
 function loadAllData() {
   fetchWebinar();
   fetchMeta();
+  fetchGHL();
 }
 
 // ── INIT ──
