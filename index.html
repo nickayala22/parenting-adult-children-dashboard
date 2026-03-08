@@ -329,6 +329,132 @@ header {
 .panel.active .kpi:nth-child(5)  { animation-delay: 0.20s; }
 .panel.active .kpi:nth-child(6)  { animation-delay: 0.24s; }
 
+/* ── LIVE BOOKINGS WIDGET ── */
+.live-bookings-widget {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+.live-bookings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #7c5cbf 0%, #9b7fd4 100%);
+  color: white;
+}
+.live-bookings-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 400;
+}
+.live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #7effc4;
+  animation: livePulse 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes livePulse {
+  0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(126,255,196,0.6); }
+  50%      { opacity:.8; box-shadow: 0 0 0 5px rgba(126,255,196,0); }
+}
+.live-bookings-count {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 42px;
+  font-weight: 300;
+  line-height: 1;
+  color: white;
+}
+.live-bookings-count-new {
+  animation: newBooking 0.6s ease both;
+}
+@keyframes newBooking {
+  0%   { transform: scale(1.3); color: #7effc4; }
+  100% { transform: scale(1);   color: white; }
+}
+.live-bookings-meta {
+  font-size: 10px;
+  color: rgba(255,255,255,0.65);
+  margin-top: 2px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.live-bookings-body {
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.live-booking-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.live-booking-row:last-child { border-bottom: none; }
+.live-booking-row:hover { background: var(--surface2); }
+.live-booking-row.new-booking {
+  animation: slideIn 0.4s ease both;
+  background: rgba(124,92,191,0.06);
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.live-booking-time {
+  font-size: 11px;
+  color: var(--plum);
+  font-weight: 600;
+  min-width: 52px;
+  text-align: center;
+  background: var(--plum-dim);
+  border-radius: 5px;
+  padding: 3px 6px;
+}
+.live-booking-name {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 500;
+  flex: 1;
+}
+.live-booking-status {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.live-bookings-empty {
+  padding: 24px 18px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.live-bookings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 18px;
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.compare-kpi {
+  min-height: 100px;
+}
+.delta-up   { color: var(--green); font-size: 11px; font-weight: 700; }
+.delta-down { color: var(--rose);  font-size: 11px; font-weight: 700; }
+.delta-flat { color: var(--text-muted); font-size: 11px; }
+
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -430,41 +556,70 @@ header {
   <!-- ═══ OVERVIEW ═══ -->
   <div class="panel active" id="panel-overview">
 
-    <div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr);">
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
       <div class="kpi">
-        <div class="kpi-label">Ad Spend <span class="source-badge source-live">Live</span></div>
+        <div class="kpi-label">Ad Spend <span class="source-badge source-live">Meta</span></div>
         <div class="kpi-value plum" id="ov-spend">—</div>
         <div class="kpi-delta delta-neutral" id="ov-spend-sub">Loading...</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">Leads Generated <span class="source-badge source-live">Live</span></div>
-        <div class="kpi-value" id="ov-leads">—</div>
-        <div class="kpi-delta delta-neutral" id="ov-cpl">CPL: —</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">Webinar Registrants <span class="source-badge source-live">Live</span></div>
+        <div class="kpi-label">Webinar Registrants <span class="source-badge source-live">WJ</span></div>
         <div class="kpi-value" id="ov-registrants">—</div>
         <div class="kpi-delta delta-neutral" id="ov-reg-sub">Loading...</div>
       </div>
       <div class="kpi accent">
-        <div class="kpi-label">Show Rate <span class="source-badge source-live">Live</span></div>
+        <div class="kpi-label">Show Rate <span class="source-badge source-live">WJ</span></div>
         <div class="kpi-value green" id="ov-showrate">—</div>
         <div class="kpi-delta delta-neutral" id="ov-showrate-sub">—</div>
-      </div>
-      <div class="kpi accent">
-        <div class="kpi-label">Gross Revenue <span class="source-badge source-live">Stripe</span></div>
-        <div class="kpi-value" id="ov-revenue">—</div>
-        <div class="kpi-delta delta-neutral" id="ov-revenue-sub">Loading...</div>
       </div>
       <div class="kpi">
         <div class="kpi-label">Booked Calls <span class="source-badge source-live">GHL</span></div>
         <div class="kpi-value plum" id="ov-booked">—</div>
         <div class="kpi-delta delta-neutral" id="ov-booked-sub">Next 30 days</div>
       </div>
-      <div class="kpi">
+    </div>
+
+    <!-- Today vs Yesterday row -->
+    <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 10px;">
+      <div class="kpi compare-kpi">
+        <div class="kpi-label">Leads Today vs Yesterday <span class="source-badge source-live">Meta</span></div>
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-top:4px;">
+          <div>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:2px;">Today</div>
+            <div class="kpi-value" id="ov-leads-today" style="font-size:32px;line-height:1;">—</div>
+          </div>
+          <div style="font-size:22px;color:var(--border);padding-bottom:4px;">vs</div>
+          <div>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:2px;">Yesterday</div>
+            <div style="font-size:28px;font-family:'Cormorant Garamond',serif;font-weight:300;color:var(--text-muted);line-height:1;" id="ov-leads-yesterday">—</div>
+          </div>
+          <div style="padding-bottom:4px;" id="ov-leads-delta"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:6px;" id="ov-leads-cpl">CPL: —</div>
+      </div>
+
+      <div class="kpi compare-kpi accent">
+        <div class="kpi-label">Revenue Today vs Yesterday <span class="source-badge source-live">Stripe</span></div>
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-top:4px;">
+          <div>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.6);margin-bottom:2px;">Today</div>
+            <div class="kpi-value" id="ov-revenue-today" style="font-size:32px;line-height:1;color:white;">—</div>
+          </div>
+          <div style="font-size:22px;color:rgba(255,255,255,0.3);padding-bottom:4px;">vs</div>
+          <div>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.6);margin-bottom:2px;">Yesterday</div>
+            <div style="font-size:28px;font-family:'Cormorant Garamond',serif;font-weight:300;color:rgba(255,255,255,0.55);line-height:1;" id="ov-revenue-yesterday">—</div>
+          </div>
+          <div style="padding-bottom:4px;" id="ov-revenue-delta"></div>
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.55);margin-top:6px;" id="ov-revenue-sub">Loading...</div>
+      </div>
+
+      <div class="kpi compare-kpi">
         <div class="kpi-label">Attendee → Booked <span class="source-badge source-live">WJ+GHL</span></div>
-        <div class="kpi-value" id="ov-conversion" style="color:var(--plum-light);">—</div>
-        <div class="kpi-delta delta-neutral" id="ov-conversion-sub">Attended → call booked</div>
+        <div class="kpi-value" id="ov-conversion" style="color:var(--plum-light);font-size:36px;margin-top:4px;">—</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:6px;" id="ov-conversion-sub">Attended → call booked</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;" id="ov-cpl">CPL: —</div>
       </div>
     </div>
 
@@ -491,6 +646,30 @@ header {
           <div style="font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;color:var(--rose);line-height:1;margin-bottom:4px;" id="ov-ctr-card">—</div>
           <div style="font-size:10px;color:var(--text-muted);">Click-through rate</div>
         </div>
+      </div>
+    </div>
+
+    <!-- Live Bookings Today Widget -->
+    <div class="live-bookings-widget">
+      <div class="live-bookings-header">
+        <div>
+          <div class="live-bookings-title">
+            <div class="live-dot"></div>
+            Booked Calls Today
+          </div>
+          <div class="live-bookings-meta" id="live-bookings-updated">Updating every 60s</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="live-bookings-count" id="live-bookings-count">—</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:0.05em;" id="live-bookings-new-label"></div>
+        </div>
+      </div>
+      <div class="live-bookings-body" id="live-bookings-list">
+        <div class="live-bookings-empty">Loading today's calls...</div>
+      </div>
+      <div class="live-bookings-footer">
+        <span id="live-bookings-status-breakdown">—</span>
+        <span id="live-bookings-last-check">—</span>
       </div>
     </div>
 
@@ -1260,6 +1439,25 @@ function renderMetaData(d) {
   setText('ov-spend-sub',  `${leads} leads · ${impressions.toLocaleString()} impressions`);
   setText('ov-leads',      leads.toLocaleString());
   setText('ov-cpl',        `CPL: ${cpl > 0 ? formatMoney(cpl) : '—'}`);
+
+  // Today vs Yesterday leads
+  const leadsToday     = data.summary?.leadsToday     ?? 0;
+  const leadsYesterday = data.summary?.leadsYesterday ?? 0;
+  setText('ov-leads-today',     leadsToday);
+  setText('ov-leads-yesterday', leadsYesterday);
+  setText('ov-leads-cpl',       cpl > 0 ? `CPL: ${formatMoney(cpl)}` : 'CPL: —');
+  const ldEl = document.getElementById('ov-leads-delta');
+  if (ldEl) {
+    if (leadsYesterday === 0) {
+      ldEl.innerHTML = '';
+    } else {
+      const diff = leadsToday - leadsYesterday;
+      const pct  = Math.round(Math.abs(diff) / leadsYesterday * 100);
+      if (diff > 0)      ldEl.innerHTML = `<span class="delta-up">+${diff} (${pct}%)</span>`;
+      else if (diff < 0) ldEl.innerHTML = `<span class="delta-down">${diff} (${pct}%)</span>`;
+      else               ldEl.innerHTML = `<span class="delta-flat">flat</span>`;
+    }
+  }
   setText('ov-cpl-card',   cpl > 0 ? formatMoney(cpl) : '—');
   setText('ov-cpl-sub',    cpl > 0 ? `${leads} leads · ${formatMoney(spend)} spend` : 'Awaiting Meta data');
   setText('ov-ctr-card',   `${typeof ctr === 'number' ? ctr.toFixed(2) : ctr}%`);
@@ -1740,6 +1938,26 @@ function renderStripeData(d) {
   // Update overview revenue card
   setText('ov-revenue',     formatMoney(gross));
   setText('ov-revenue-sub', `Net: ${formatMoney(trueNet)} · ${refCount} refund${refCount !== 1 ? 's' : ''}`);
+
+  // Today vs Yesterday revenue
+  const revToday     = data.revenue?.today     ?? 0;
+  const revYesterday = data.revenue?.yesterday ?? 0;
+  setText('ov-revenue-today',     formatMoney(revToday));
+  setText('ov-revenue-yesterday', formatMoney(revYesterday));
+  const rdEl = document.getElementById('ov-revenue-delta');
+  if (rdEl) {
+    if (revYesterday === 0 && revToday === 0) {
+      rdEl.innerHTML = '';
+    } else if (revYesterday === 0) {
+      rdEl.innerHTML = `<span class="delta-up" style="color:#7effc4;">new</span>`;
+    } else {
+      const diff = revToday - revYesterday;
+      const pct  = Math.round(Math.abs(diff) / revYesterday * 100);
+      if (diff > 0)      rdEl.innerHTML = `<span class="delta-up" style="color:#7effc4;">+${formatMoney(diff)} (${pct}%)</span>`;
+      else if (diff < 0) rdEl.innerHTML = `<span class="delta-down" style="color:#ffaaaa;">${formatMoney(diff)} (${pct}%)</span>`;
+      else               rdEl.innerHTML = `<span class="delta-flat" style="color:rgba(255,255,255,0.4);">flat</span>`;
+    }
+  }
 }
 
 // ── LOAD ALL ──
@@ -1750,9 +1968,114 @@ function loadAllData() {
   fetchStripe();
 }
 
+// ── LIVE BOOKINGS TODAY (60s fast poll) ──
+let _prevTodayCount = null;
+let _prevTodayIds   = new Set();
+
+async function fetchLiveBookings() {
+  try {
+    const res  = await fetch(`${WORKER_URL}/ghl/summary`);
+    const data = await res.json();
+    if (!res.ok || data.error) return;
+    renderLiveBookings(data);
+  } catch(e) { /* silent fail, retry next tick */ }
+}
+
+function renderLiveBookings(data) {
+  const bookedCalls = data.bookedCalls || {};
+  const appts       = data.recentAppts || [];
+  const now         = new Date();
+
+  // Today's only
+  const todayAppts = appts.filter(a => {
+    return new Date(a.startTime || 0).toDateString() === now.toDateString();
+  }).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+  const count    = bookedCalls.today || todayAppts.length;
+  const isNew    = _prevTodayCount !== null && count > _prevTodayCount;
+  const newCount = isNew ? count - _prevTodayCount : 0;
+
+  // Update count
+  const countEl = document.getElementById('live-bookings-count');
+  if (countEl) {
+    countEl.textContent = count;
+    if (isNew) {
+      countEl.classList.remove('live-bookings-count-new');
+      void countEl.offsetWidth; // force reflow
+      countEl.classList.add('live-bookings-count-new');
+    }
+  }
+
+  // New label
+  const newLabel = document.getElementById('live-bookings-new-label');
+  if (newLabel) {
+    newLabel.textContent = isNew ? `+${newCount} new` : '';
+  }
+
+  // Build today's call IDs for new-row detection
+  const currentIds = new Set(todayAppts.map(a => a.startTime + a.name));
+
+  // Status color map
+  const stColor = {
+    confirmed: 'var(--plum)',
+    showed:    'var(--green)',
+    noshow:    'var(--rose)',
+    cancelled: 'var(--text-muted)',
+  };
+
+  // Render rows
+  const listEl = document.getElementById('live-bookings-list');
+  if (listEl) {
+    if (!todayAppts.length) {
+      listEl.innerHTML = '<div class="live-bookings-empty">No calls booked yet today</div>';
+    } else {
+      listEl.innerHTML = todayAppts.map(a => {
+        const t      = new Date(a.startTime).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+        const name   = a.name.replace(/Relationship Clarity Call/i,'').replace(/SCHOLARSHIP:/i,'').replace(/CONFIRMED:/i,'').replace(/FOLLOW UP:/i,'').replace(/RESCHEDULE:/i,'').trim().replace(/^:\s*/, '').trim();
+        const id     = a.startTime + a.name;
+        const isNewRow = _prevTodayIds.size > 0 && !_prevTodayIds.has(id);
+        const st     = (a.status || '').toLowerCase();
+        const stC    = stColor[st] || 'var(--text-muted)';
+        return `<div class="live-booking-row${isNewRow ? ' new-booking' : ''}">
+          <span class="live-booking-time">${t}</span>
+          <span class="live-booking-name">${name || a.name}</span>
+          <span class="live-booking-status" style="color:${stC};">${st || '—'}</span>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Footer: status breakdown
+  const byStatus  = bookedCalls.byStatus || {};
+  const footerEl  = document.getElementById('live-bookings-status-breakdown');
+  if (footerEl) {
+    const parts = [];
+    if (byStatus.confirmed) parts.push(`${byStatus.confirmed} confirmed`);
+    if (byStatus.showed)    parts.push(`${byStatus.showed} showed`);
+    if (byStatus.noshow)    parts.push(`${byStatus.noshow} no-show`);
+    if (byStatus.cancelled) parts.push(`${byStatus.cancelled} cancelled`);
+    footerEl.textContent = parts.join(' · ') || '—';
+  }
+
+  // Last check time
+  const lastEl = document.getElementById('live-bookings-last-check');
+  if (lastEl) {
+    lastEl.textContent = `Updated ${now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit' })}`;
+  }
+
+  const updatedEl = document.getElementById('live-bookings-updated');
+  if (updatedEl) updatedEl.textContent = 'Live · updates every 60s';
+
+  // Store state for next comparison
+  _prevTodayCount = count;
+  _prevTodayIds   = currentIds;
+}
+
 // ── INIT ──
 loadAllData();
+fetchLiveBookings(); // immediate first hit
 setInterval(loadAllData, 15 * 60 * 1000);
+setInterval(fetchLiveBookings, 60 * 1000); // fast poll for live bookings
 </script>
 </body>
 </html>
