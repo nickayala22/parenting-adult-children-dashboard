@@ -1075,21 +1075,29 @@ header {
     <div class="grid-2" style="margin-top:14px;">
       <div class="card">
         <div class="card-title">Bank Deposits <span class="source-badge source-live">Stripe Payouts</span></div>
-        <div id="stripe-next-payout" style="margin-bottom:16px;padding:12px 14px;background:var(--plum-dim);border:1px solid var(--lavender);border-radius:8px;display:none;">
-          <div style="font-size:10px;color:var(--plum);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Next Deposit</div>
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--plum);" id="stripe-next-payout-amt">—</div>
+
+        <!-- Pending / In Transit summary -->
+        <div id="stripe-pending-banner" style="display:none;margin-bottom:14px;border-radius:8px;overflow:hidden;border:1px solid var(--lavender);">
+          <div style="background:linear-gradient(135deg,#7c5cbf,#9b7fd4);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Coming to Your Bank</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:32px;color:white;font-weight:300;line-height:1;" id="stripe-pending-total">—</div>
+            </div>
             <div style="text-align:right;">
-              <div style="font-size:11px;color:var(--text-mid);" id="stripe-next-payout-date">—</div>
-              <div style="font-size:10px;margin-top:2px;" id="stripe-next-payout-status">—</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.65);margin-bottom:3px;" id="stripe-pending-count">— payouts</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.65);">Not yet deposited</div>
             </div>
           </div>
+          <div id="stripe-pending-rows" style="background:var(--surface2);"></div>
         </div>
+
+        <!-- Already deposited -->
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Already Deposited</div>
         <div class="data-table-wrap">
         <table class="data-table">
-          <thead><tr><th>Amount</th><th>Arrival Date</th><th>Method</th><th>Status</th></tr></thead>
+          <thead><tr><th>Amount</th><th>Arrived</th><th>Method</th></tr></thead>
           <tbody id="stripePayoutsTable">
-            <tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
+            <tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
           </tbody>
         </table>
         </div>
@@ -1848,47 +1856,66 @@ function renderStripeData(d) {
   setText('stripe-true-net',         formatMoney(trueNet));
   setText('stripe-keep-rate',        keepRate !== '—' ? `${keepRate}%` : '—');
 
-  // Payouts / bank deposits table
+  // Payouts — split pending/in_transit vs paid
   const payoutsList = d.payouts?.list || [];
-  const nextPayout  = d.payouts?.nextPayout;
 
-  if (nextPayout) {
-    const nextEl = document.getElementById('stripe-next-payout');
-    if (nextEl) nextEl.style.display = 'block';
-    setText('stripe-next-payout-amt',  formatMoney(nextPayout.amount));
-    const arrDate = nextPayout.arrival_date
-      ? new Date(nextPayout.arrival_date * 1000).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' })
-      : '—';
-    setText('stripe-next-payout-date', `Arrives ${arrDate}`);
-    const statusColor = nextPayout.status === 'in_transit' ? 'var(--green)' : 'var(--amber)';
-    document.getElementById('stripe-next-payout-status').innerHTML =
-      `<span style="color:${statusColor};font-size:10px;font-weight:600;text-transform:uppercase;">${nextPayout.status.replace('_',' ')}</span>`;
+  const pendingPayouts = payoutsList
+    .filter(p => p.status === 'pending' || p.status === 'in_transit')
+    .sort((a, b) => a.arrival_date - b.arrival_date);
+
+  const paidPayoutsList = payoutsList
+    .filter(p => p.status === 'paid')
+    .sort((a, b) => b.arrival_date - a.arrival_date);
+
+  const pendingTotal = pendingPayouts.reduce((s, p) => s + p.amount, 0);
+
+  // Pending banner
+  const pendingBanner = document.getElementById('stripe-pending-banner');
+  if (pendingBanner) {
+    if (pendingPayouts.length > 0) {
+      pendingBanner.style.display = 'block';
+      setText('stripe-pending-total', formatMoney(pendingTotal));
+      setText('stripe-pending-count', `${pendingPayouts.length} payout${pendingPayouts.length !== 1 ? 's' : ''}`);
+
+      const pendingRows = document.getElementById('stripe-pending-rows');
+      if (pendingRows) {
+        pendingRows.innerHTML = pendingPayouts.map(p => {
+          const arrDate = p.arrival_date
+            ? new Date(p.arrival_date * 1000).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' })
+            : '—';
+          const isTransit = p.status === 'in_transit';
+          const dot   = isTransit
+            ? '<span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;"></span>'
+            : '<span style="width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block;margin-right:6px;animation:livePulse 1.4s ease-in-out infinite;"></span>';
+          const label = isTransit ? 'In transit' : 'Pending';
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-top:1px solid var(--border);">
+            <div style="display:flex;align-items:center;">${dot}<span style="font-size:11px;color:var(--text-muted);">${label} · Arrives ${arrDate}</span></div>
+            <span style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--plum-light);">${formatMoney(p.amount)}</span>
+          </div>`;
+        }).join('');
+      }
+    } else {
+      pendingBanner.style.display = 'none';
+    }
   }
 
+  // Paid deposits table
   const ptbody = document.getElementById('stripePayoutsTable');
   if (ptbody) {
-    if (!payoutsList.length) {
-      ptbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">No payouts in this period</td></tr>';
+    if (!paidPayoutsList.length) {
+      ptbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">No deposits in this period</td></tr>';
     } else {
-      const statusStyle = {
-        paid:       'color:var(--green);',
-        in_transit: 'color:var(--plum);',
-        pending:    'color:var(--amber);',
-        failed:     'color:var(--red);',
-        canceled:   'color:var(--text-muted);',
-      };
-      ptbody.innerHTML = payoutsList.map(p => {
+      ptbody.innerHTML = paidPayoutsList.map(p => {
         const arrDate = p.arrival_date
           ? new Date(p.arrival_date * 1000).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
           : '—';
-        const st    = p.status || 'unknown';
-        const stCss = statusStyle[st] || 'color:var(--text-muted);';
-        const method = p.method === 'instant' ? '<span class="badge badge-plum">Instant</span>' : '<span class="badge badge-amber">Standard</span>';
+        const method = p.method === 'instant'
+          ? '<span class="badge badge-plum">Instant</span>'
+          : '<span class="badge badge-amber">Standard</span>';
         return `<tr>
           <td style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--green);">${formatMoney(p.amount)}</td>
           <td style="color:var(--text);">${arrDate}</td>
           <td>${method}</td>
-          <td style="${stCss}font-size:10px;font-weight:600;text-transform:uppercase;">${st.replace('_',' ')}</td>
         </tr>`;
       }).join('');
     }
