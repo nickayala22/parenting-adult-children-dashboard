@@ -1874,18 +1874,13 @@ function renderStripeData(d) {
   setText('stripe-true-net',         formatMoney(trueNet));
   setText('stripe-keep-rate',        keepRate !== '—' ? `${keepRate}%` : '—');
 
-  // Payouts — split pending/in_transit vs paid
-  const payoutsList = d.payouts?.list || [];
-
-  const pendingPayouts = payoutsList
-    .filter(p => p.status === 'pending' || p.status === 'in_transit')
-    .sort((a, b) => a.arrival_date - b.arrival_date);
-
-  const paidPayoutsList = payoutsList
+  // Payouts — use pre-split lists from worker (upcoming is always fetched regardless of date range)
+  const pendingPayouts  = d.payouts?.upcoming || [];
+  const paidPayoutsList = (d.payouts?.list || [])
     .filter(p => p.status === 'paid')
     .sort((a, b) => b.arrival_date - a.arrival_date);
 
-  const pendingTotal = pendingPayouts.reduce((s, p) => s + p.amount, 0);
+  const pendingTotal = d.payouts?.upcomingTotal ?? pendingPayouts.reduce((s, p) => s + p.amount, 0);
 
   // Pending banner
   const pendingBanner = document.getElementById('stripe-pending-banner');
