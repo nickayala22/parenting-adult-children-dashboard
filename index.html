@@ -8,28 +8,29 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
-  --bg:           #faf8f5;
+  --bg:           #f4f1f9;
   --surface:      #ffffff;
-  --surface2:     #f5f2ee;
-  --border:       #e8e2da;
-  --border-bright:#c9bfb4;
+  --surface2:     #ede8f5;
+  --border:       #d9d0ea;
+  --border-bright:#b8a8d8;
   --plum:         #7c5cbf;
   --plum-light:   #9b7fd4;
-  --plum-dim:     rgba(124, 92, 191, 0.08);
-  --lavender:     #d4c8f0;
+  --plum-dim:     rgba(124, 92, 191, 0.10);
+  --plum-soft:    #e8e0f5;
+  --lavender:     #c9b8e8;
   --rose:         #c97a94;
   --rose-dim:     rgba(201, 122, 148, 0.1);
   --text:         #2d2438;
-  --text-muted:   #9a8f9e;
-  --text-mid:     #6b5f74;
+  --text-muted:   #8a7e98;
+  --text-mid:     #5e5070;
   --green:        #3a9e72;
   --green-dim:    rgba(58, 158, 114, 0.1);
   --red:          #c0534a;
   --red-dim:      rgba(192, 83, 74, 0.1);
   --amber:        #b07a2a;
   --amber-dim:    rgba(176, 122, 42, 0.1);
-  --shadow:       0 1px 4px rgba(45,36,56,0.06), 0 4px 16px rgba(45,36,56,0.04);
-  --shadow-hover: 0 2px 8px rgba(45,36,56,0.1), 0 8px 24px rgba(45,36,56,0.06);
+  --shadow:       0 1px 4px rgba(45,36,56,0.07), 0 4px 16px rgba(124,92,191,0.06);
+  --shadow-hover: 0 2px 8px rgba(124,92,191,0.12), 0 8px 24px rgba(124,92,191,0.08);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -41,6 +42,18 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
 }
+
+/* Purple top accent bar */
+body::before {
+  content: '';
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, #7c5cbf 0%, #b89ee0 50%, #c97a94 100%);
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+}
+.wrap { padding-top: 3px; }
 
 .wrap {
   max-width: 1440px;
@@ -98,7 +111,7 @@ header {
   transition: all 0.15s;
 }
 .date-btn:hover { color: var(--text); background: var(--surface2); }
-.date-btn.active { color: var(--plum); background: var(--plum-dim); }
+.date-btn.active { color: #ffffff; background: var(--plum); }
 
 .refresh-row {
   display: flex; align-items: center; gap: 8px;
@@ -160,7 +173,7 @@ header {
   white-space: nowrap;
 }
 .tab:hover { color: var(--text); }
-.tab.active { color: var(--plum); border-bottom-color: var(--plum); }
+.tab.active { color: var(--plum); border-bottom-color: var(--plum); background: var(--plum-dim); border-radius: 6px 6px 0 0; }
 
 .panel { display: none; }
 .panel.active { display: block; }
@@ -181,6 +194,13 @@ header {
   transition: box-shadow 0.2s, transform 0.2s;
 }
 .kpi:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+.kpi.accent {
+  background: linear-gradient(135deg, #7c5cbf 0%, #9b7fd4 100%);
+  border-color: #7c5cbf;
+}
+.kpi.accent .kpi-label { color: rgba(255,255,255,0.7); }
+.kpi.accent .kpi-value { color: #ffffff; }
+.kpi.accent .kpi-delta { color: rgba(255,255,255,0.75); }
 
 .kpi-label {
   font-size: 10px; font-weight: 600; text-transform: uppercase;
@@ -217,6 +237,15 @@ header {
   border-radius: 12px; padding: 22px;
   box-shadow: var(--shadow);
   position: relative; overflow: hidden;
+}
+.card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: linear-gradient(180deg, var(--plum) 0%, var(--lavender) 100%);
+  border-radius: 12px 0 0 12px;
+  opacity: 0.5;
 }
 
 .card-title {
@@ -274,8 +303,8 @@ header {
 /* ── SECTION HEADER ── */
 .section-header {
   font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
-  color: var(--text-muted); padding: 0 0 14px;
-  border-bottom: 1px solid var(--border); margin-bottom: 16px;
+  color: var(--plum); padding: 0 0 14px;
+  border-bottom: 2px solid var(--plum-soft); margin-bottom: 16px;
 }
 
 /* ── ERROR BANNER ── */
@@ -306,13 +335,55 @@ header {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 /* ── RESPONSIVE ── */
-@media (max-width: 900px) {
-  .grid-2, .grid-3, .grid-3-1 { grid-template-columns: 1fr; }
-  .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .grid-3   { grid-template-columns: 1fr 1fr; }
+  .grid-3-1 { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
-@media (max-width: 500px) {
-  .kpi-grid { grid-template-columns: 1fr !important; }
+
+/* Mobile */
+@media (max-width: 768px) {
   .wrap { padding: 0 16px 60px; }
+
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 18px 0 16px;
+    margin-bottom: 20px;
+  }
+  .header-right { width: 100%; justify-content: space-between; gap: 10px; }
+  .date-range { flex: 1; }
+  .date-btn   { flex: 1; text-align: center; padding: 8px 6px; font-size: 10px; }
+  .refresh-btn { padding: 7px 12px; font-size: 10px; }
+
+  .tab-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-bottom: 20px;
+  }
+  .tab-nav::-webkit-scrollbar { display: none; }
+  .tab { flex-shrink: 0; padding: 10px 14px; font-size: 10px; }
+
+  .grid-2, .grid-3, .grid-3-1 { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+  .kpi { padding: 16px 14px 13px; }
+  .kpi-value { font-size: 28px; }
+  .card { padding: 16px; }
+
+  .data-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table { min-width: 480px; }
+}
+
+/* Small phones */
+@media (max-width: 420px) {
+  .kpi-grid { grid-template-columns: 1fr !important; }
+  .tab { font-size: 9.5px; padding: 9px 11px; }
+  .wrap { padding: 0 12px 50px; }
 }
 </style>
 </head>
@@ -375,14 +446,14 @@ header {
         <div class="kpi-value" id="ov-registrants">—</div>
         <div class="kpi-delta delta-neutral" id="ov-reg-sub">Loading...</div>
       </div>
-      <div class="kpi">
+      <div class="kpi accent">
         <div class="kpi-label">Show Rate <span class="source-badge source-live">Live</span></div>
         <div class="kpi-value green" id="ov-showrate">—</div>
         <div class="kpi-delta delta-neutral" id="ov-showrate-sub">—</div>
       </div>
-      <div class="kpi">
+      <div class="kpi accent">
         <div class="kpi-label">Gross Revenue <span class="source-badge source-live">Stripe</span></div>
-        <div class="kpi-value" style="color:var(--green);" id="ov-revenue">—</div>
+        <div class="kpi-value" id="ov-revenue">—</div>
         <div class="kpi-delta delta-neutral" id="ov-revenue-sub">Loading...</div>
       </div>
     </div>
@@ -514,12 +585,14 @@ header {
         </div>
         <div class="card" style="margin-top:14px;">
           <div class="card-title">Recent Registrants</div>
+          <div class="data-table-wrap">
           <table class="data-table">
             <thead><tr><th>Name</th><th>Email</th><th>Date</th><th>Att.</th></tr></thead>
             <tbody id="liveRegistrantsTable">
               <tr><td colspan="4" style="color:var(--text-muted);padding:12px 0;">Loading...</td></tr>
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
@@ -556,12 +629,14 @@ header {
         </div>
         <div class="card" style="margin-top:14px;">
           <div class="card-title">Recent Registrants</div>
+          <div class="data-table-wrap">
           <table class="data-table">
             <thead><tr><th>Name</th><th>Email</th><th>Date</th><th>Att.</th></tr></thead>
             <tbody id="egRegistrantsTable">
               <tr><td colspan="4" style="color:var(--text-muted);padding:12px 0;">Loading...</td></tr>
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
@@ -679,12 +754,14 @@ header {
     <!-- Recent appointments -->
     <div class="card" style="margin-top:14px;">
       <div class="card-title">Upcoming Booked Calls <span class="source-badge source-live">GHL Live</span></div>
+      <div class="data-table-wrap">
       <table class="data-table">
         <thead><tr><th>Name</th><th>Time</th><th>Status</th></tr></thead>
         <tbody id="ghlApptsTable">
           <tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
         </tbody>
       </table>
+      </div>
     </div>
 
   </div>
@@ -693,7 +770,7 @@ header {
   <div class="panel" id="panel-stripe">
 
     <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
-      <div class="kpi">
+      <div class="kpi accent">
         <div class="kpi-label">Gross Revenue <span class="source-badge source-live">Stripe</span></div>
         <div class="kpi-value plum" id="stripe-revenue">—</div>
         <div class="kpi-delta delta-neutral" id="stripe-revenue-sub">— transactions</div>
@@ -756,12 +833,14 @@ header {
 
     <div class="card" style="margin-top:14px;">
       <div class="card-title">Recent Transactions <span class="source-badge source-live">Stripe Live</span></div>
+      <div class="data-table-wrap">
       <table class="data-table">
         <thead><tr><th>Customer</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead>
         <tbody id="stripeChargesTable">
           <tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
         </tbody>
       </table>
+      </div>
     </div>
 
   </div>
