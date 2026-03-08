@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PACT — Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:           #100e14;
+  --surface:      #16121e;
+  --surface2:     #1d1728;
+  --border:       rgba(162, 112, 208, 0.14);
+  --border-bright:rgba(162, 112, 208, 0.38);
+  --plum:         #a270d0;
+  --plum-light:   #c49ee8;
+  --plum-dim:     rgba(162, 112, 208, 0.09);
+  --lavender:     #d4b8f0;
+  --rose:         #e8a4b8;
+  --rose-dim:     rgba(232, 164, 184, 0.1);
+  --text:         #ede8f5;
+  --text-muted:   #5e5470;
+  --text-mid:     #9b8fb0;
+  --green:        #7edcb0;
+  --green-dim:    rgba(126, 220, 176, 0.1);
+  --red:          #e07878;
+  --red-dim:      rgba(224, 120, 120, 0.1);
+  --amber:        #e8c070;
+  --amber-dim:    rgba(232, 192, 112, 0.1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Ambient glow */
+body::before {
+  content: '';
+  position: fixed;
+  top: -180px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 420px;
+  background: radial-gradient(ellipse, rgba(162,112,208,0.07) 0%, transparent 68%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Grain overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.4;
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 28px 80px;
+}
+
+/* ── HEADER ── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 26px 0 22px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.header-left { display: flex; flex-direction: column; gap: 5px; }
+
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.logo-mark {
+  width: 38px; height: 38px;
+  border: 1.5px solid var(--plum);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; font-weight: 600;
+  color: var(--plum);
+  letter-spacing: -0.5px;
+}
+
+.header-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 400;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+.header-sub {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding-left: 52px;
+}
+
+.header-right {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+}
+
+.date-range {
+  display: flex; gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px; overflow: hidden;
+}
+
+.date-btn {
+  padding: 7px 13px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.06em;
+  color: var(--text-muted);
+  background: transparent; border: none; cursor: pointer;
+  transition: all 0.15s; text-transform: uppercase;
+}
+.date-btn:hover { color: var(--text); background: var(--surface2); }
+.date-btn.active { color: var(--plum-light); background: var(--plum-dim); }
+
+.refresh-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2.5s ease-in-out infinite;
+}
+.status-dot.loading { background: var(--amber); animation: none; }
+.status-dot.error   { background: var(--red);   animation: none; }
+
+@keyframes pulse {
+  0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(126,220,176,0.5); }
+  50%      { opacity:.7; box-shadow: 0 0 0 4px rgba(126,220,176,0); }
+}
+
+.refresh-btn {
+  padding: 7px 14px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  cursor: pointer; border-radius: 5px; transition: all 0.15s;
+}
+.refresh-btn:hover { border-color: var(--plum); color: var(--plum); }
+
+/* ── SOURCE BADGES ── */
+.source-badge {
+  display: inline-block;
+  padding: 2px 6px; border-radius: 3px;
+  font-size: 8px; letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.source-live { background: rgba(126,220,176,0.12); color: var(--green); border: 1px solid rgba(126,220,176,0.3); }
+.source-mock { background: rgba(90,80,112,0.2); color: var(--text-muted); border: 1px solid rgba(90,80,112,0.3); }
+
+/* ── TABS ── */
+.tab-nav {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 10px 16px;
+  font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--text-muted); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all 0.15s; background: none;
+  border-top: none; border-left: none; border-right: none;
+  font-family: 'DM Mono', monospace;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--plum-light); border-bottom-color: var(--plum); }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── KPI GRID ── */
+.kpi-grid {
+  display: grid;
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+  margin-bottom: 26px;
+}
+
+.kpi {
+  background: var(--surface);
+  padding: 22px 22px 18px;
+  transition: background 0.15s;
+}
+.kpi:hover { background: var(--surface2); }
+
+.kpi-label {
+  font-size: 9px; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.kpi-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 34px; font-weight: 300;
+  color: var(--text); line-height: 1;
+  margin-bottom: 7px; letter-spacing: -0.5px;
+}
+.kpi-value.plum  { color: var(--plum-light); }
+.kpi-value.green { color: var(--green); }
+.kpi-value.red   { color: var(--red); }
+.kpi-value.rose  { color: var(--rose); }
+
+.kpi-delta { font-size: 10px; display: flex; align-items: center; gap: 4px; }
+.delta-up      { color: var(--green); }
+.delta-down    { color: var(--red); }
+.delta-neutral { color: var(--text-muted); }
+
+/* ── LAYOUT GRIDS ── */
+.grid-2   { display: grid; grid-template-columns: 1fr 1fr;  gap: 16px; margin-bottom: 16px; }
+.grid-3   { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-3-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+/* ── CARD ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 22px;
+  position: relative; overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(162,112,208,0.22), transparent);
+}
+
+.card-title {
+  font-size: 9px; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-muted);
+  margin-bottom: 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.card-title span { font-size: 10px; color: var(--text-mid); text-transform: none; letter-spacing: 0; }
+
+/* ── FUNNEL ── */
+.funnel-wrap { display: flex; flex-direction: column; gap: 12px; }
+.funnel-step { position: relative; }
+.funnel-label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.funnel-name { font-size: 11px; color: var(--text-mid); }
+.funnel-nums { display: flex; gap: 10px; align-items: baseline; }
+.funnel-count { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: var(--text); }
+.funnel-pct   { font-size: 10px; color: var(--plum-light); }
+.funnel-bar-bg { height: 5px; background: rgba(255,255,255,0.04); border-radius: 3px; overflow: hidden; }
+.funnel-bar    { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--plum-dim) 0%, var(--plum) 100%); transition: width 1s cubic-bezier(0.16,1,0.3,1); }
+.funnel-bar.green-bar { background: linear-gradient(90deg, var(--green-dim) 0%, var(--green) 100%); }
+.funnel-bar.rose-bar  { background: linear-gradient(90deg, var(--rose-dim) 0%, var(--rose) 100%); }
+
+/* ── DATA TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.data-table th {
+  text-align: left; font-size: 9px; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-muted);
+  padding: 0 0 12px; border-bottom: 1px solid var(--border); font-weight: 400;
+}
+.data-table th:not(:first-child) { text-align: right; }
+.data-table td {
+  padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  color: var(--text-mid); vertical-align: middle;
+}
+.data-table td:not(:first-child) { text-align: right; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { color: var(--text); }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-block; padding: 2px 8px;
+  border-radius: 3px; font-size: 9px;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+.badge-green  { background: var(--green-dim);  color: var(--green); }
+.badge-plum   { background: var(--plum-dim);   color: var(--plum-light); }
+.badge-red    { background: var(--red-dim);    color: var(--red); }
+.badge-amber  { background: var(--amber-dim);  color: var(--amber); }
+.badge-rose   { background: var(--rose-dim);   color: var(--rose); }
+
+/* ── CHART ── */
+.chart-wrap { position: relative; width: 100%; }
+
+/* ── SECTION HEADER ── */
+.section-header {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--text-muted); padding: 0 0 14px;
+  border-bottom: 1px solid var(--border); margin-bottom: 16px;
+}
+
+/* ── ERROR BANNER ── */
+.error-banner {
+  background: var(--red-dim); border: 1px solid rgba(224,120,120,0.3);
+  border-radius: 8px; padding: 12px 16px;
+  font-size: 11px; color: var(--red);
+  margin-bottom: 20px; display: none;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.panel.active .kpi  { animation: fadeUp 0.4s ease both; }
+.panel.active .card { animation: fadeUp 0.4s ease both; }
+.panel.active .kpi:nth-child(1)  { animation-delay: 0.04s; }
+.panel.active .kpi:nth-child(2)  { animation-delay: 0.08s; }
+.panel.active .kpi:nth-child(3)  { animation-delay: 0.12s; }
+.panel.active .kpi:nth-child(4)  { animation-delay: 0.16s; }
+.panel.active .kpi:nth-child(5)  { animation-delay: 0.20s; }
+.panel.active .kpi:nth-child(6)  { animation-delay: 0.24s; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .grid-2, .grid-3, .grid-3-1 { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+}
+@media (max-width: 500px) {
+  .kpi-grid { grid-template-columns: 1fr !important; }
+  .wrap { padding: 0 14px 60px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="header-left">
+      <div class="logo-row">
+        <div class="logo-mark">P</div>
+        <div class="header-title">Parenting Adult Children Today</div>
+      </div>
+      <div class="header-sub">Command Center &nbsp;·&nbsp; <span id="data-status">Loading live data...</span></div>
+    </div>
+    <div class="header-right">
+      <div class="date-range">
+        <button class="date-btn" onclick="setPreset(this,'7d')">7D</button>
+        <button class="date-btn active" onclick="setPreset(this,'30d')">30D</button>
+        <button class="date-btn" onclick="setPreset(this,'90d')">90D</button>
+        <button class="date-btn" onclick="setPreset(this,'mtd')">MTD</button>
+        <div style="display:flex;align-items:center;gap:4px;margin-left:4px;">
+          <input type="date" id="dateFrom" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 6px;font-size:11px;font-family:inherit;" onchange="applyCustomRange()">
+          <span style="color:var(--text-muted);font-size:11px;">to</span>
+          <input type="date" id="dateTo" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 6px;font-size:11px;font-family:inherit;" onchange="applyCustomRange()">
+        </div>
+      </div>
+      <div class="refresh-row">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="last-refresh">Loading...</span>
+      </div>
+      <button class="refresh-btn" onclick="loadAllData()">↻ Refresh</button>
+    </div>
+  </header>
+
+  <div class="tab-nav">
+    <button class="tab active" onclick="switchTab(this,'overview')">Overview</button>
+    <button class="tab" onclick="switchTab(this,'webinar')">Webinar <span class="source-badge source-live" style="margin-left:6px">Live</span></button>
+    <button class="tab" onclick="switchTab(this,'ads')">Meta Ads <span class="source-badge source-live" style="margin-left:6px">Live</span></button>
+  </div>
+
+  <div id="errorBanner" class="error-banner"></div>
+
+  <!-- ═══ OVERVIEW ═══ -->
+  <div class="panel active" id="panel-overview">
+
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="kpi">
+        <div class="kpi-label">Ad Spend <span class="source-badge source-live">Live</span></div>
+        <div class="kpi-value plum" id="ov-spend">—</div>
+        <div class="kpi-delta delta-neutral" id="ov-spend-sub">Loading...</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Leads Generated <span class="source-badge source-live">Live</span></div>
+        <div class="kpi-value" id="ov-leads">—</div>
+        <div class="kpi-delta delta-neutral" id="ov-cpl">CPL: —</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Webinar Registrants <span class="source-badge source-live">Live</span></div>
+        <div class="kpi-value" id="ov-registrants">—</div>
+        <div class="kpi-delta delta-neutral" id="ov-reg-sub">Loading...</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Show Rate <span class="source-badge source-live">Live</span></div>
+        <div class="kpi-value green" id="ov-showrate">—</div>
+        <div class="kpi-delta delta-neutral" id="ov-showrate-sub">—</div>
+      </div>
+    </div>
+
+    <div class="grid-3-1">
+      <div class="card">
+        <div class="card-title">Webinar Funnel <span>Lead → Attended</span></div>
+        <div class="funnel-wrap" id="overviewFunnel">
+          <div style="color:var(--text-muted);font-size:11px;padding:16px 0;">Loading live data...</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card" style="flex:1;">
+          <div class="card-title">Cost Per Lead <span class="source-badge source-live">Live</span></div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:300;color:var(--plum-light);line-height:1;margin-bottom:4px;" id="ov-cpl-card">—</div>
+          <div style="font-size:10px;color:var(--text-muted);" id="ov-cpl-sub">Awaiting Meta data</div>
+        </div>
+        <div class="card" style="flex:1;">
+          <div class="card-title">Cost Per Registrant <span class="source-badge source-live">Live</span></div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;color:var(--text-mid);line-height:1;margin-bottom:4px;" id="ov-cpr-card">—</div>
+          <div style="font-size:10px;color:var(--text-muted);" id="ov-cpr-sub">Spend ÷ registrants</div>
+        </div>
+        <div class="card" style="flex:1;">
+          <div class="card-title">CTR <span class="source-badge source-live">Live</span></div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;color:var(--rose);line-height:1;margin-bottom:4px;" id="ov-ctr-card">—</div>
+          <div style="font-size:10px;color:var(--text-muted);">Click-through rate</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Daily Ad Spend vs Leads <span class="source-badge source-live">Live</span></div>
+        <div class="chart-wrap" style="height:200px;">
+          <canvas id="overviewSpendChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Webinar Attendance <span class="source-badge source-live">Live</span></div>
+        <div style="padding:6px 0;">
+          <div class="funnel-step">
+            <div class="funnel-label-row">
+              <span class="funnel-name">Registered</span>
+              <div class="funnel-nums"><span class="funnel-count" id="ov-wj-reg">—</span></div>
+            </div>
+            <div class="funnel-bar-bg"><div class="funnel-bar" id="ov-wj-reg-bar" style="width:100%"></div></div>
+          </div>
+          <div class="funnel-step" style="margin-top:14px;">
+            <div class="funnel-label-row">
+              <span class="funnel-name">Attended Live</span>
+              <div class="funnel-nums"><span class="funnel-count" id="ov-wj-att">—</span><span class="funnel-pct" id="ov-wj-att-pct">—</span></div>
+            </div>
+            <div class="funnel-bar-bg"><div class="funnel-bar green-bar" id="ov-wj-att-bar" style="width:0%"></div></div>
+          </div>
+          <div class="funnel-step" style="margin-top:14px;">
+            <div class="funnel-label-row">
+              <span class="funnel-name">No-Show</span>
+              <div class="funnel-nums"><span class="funnel-count" id="ov-wj-noshow">—</span><span class="funnel-pct" id="ov-wj-noshow-pct" style="color:var(--rose);">—</span></div>
+            </div>
+            <div class="funnel-bar-bg"><div class="funnel-bar rose-bar" id="ov-wj-noshow-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:12px;" id="ov-wj-name">Loading webinar info...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ WEBINAR ═══ -->
+  <div class="panel" id="panel-webinar">
+
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="kpi">
+        <div class="kpi-label">Registrants <span class="source-badge source-live">WJ Live</span></div>
+        <div class="kpi-value plum" id="wj-registrants">—</div>
+        <div class="kpi-delta delta-neutral" id="wj-webinar-name">Loading...</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Attended <span class="source-badge source-live">WJ Live</span></div>
+        <div class="kpi-value green" id="wj-attended">—</div>
+        <div class="kpi-delta delta-neutral" id="wj-showrate">Loading...</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">No-Show <span class="source-badge source-live">WJ Live</span></div>
+        <div class="kpi-value red" id="wj-noshow">—</div>
+        <div class="kpi-delta delta-neutral">Registered, didn't attend</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Show Rate <span class="source-badge source-live">WJ Live</span></div>
+        <div class="kpi-value" id="wj-showrate-val">—</div>
+        <div class="kpi-delta delta-neutral">Of completed sessions</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Daily Registrations (Last 30 Days) <span class="source-badge source-live">WJ Live</span></div>
+        <div class="chart-wrap" style="height:220px;">
+          <canvas id="wjDailyChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Attended vs No-Show <span class="source-badge source-live">WJ Live</span></div>
+        <div class="chart-wrap" style="height:220px;">
+          <canvas id="wjAttendanceChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Recent Registrants <span class="source-badge source-live">WJ Live</span></div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Name</th><th>Email</th><th>Registered</th><th>Attended</th></tr>
+        </thead>
+        <tbody id="wjRegistrantsTable">
+          <tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- ═══ META ADS ═══ -->
+  <div class="panel" id="panel-ads">
+
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom:24px;">
+      <div class="kpi">
+        <div class="kpi-label">Total Spend <span class="source-badge source-live">Live</span></div>
+        <div class="kpi-value plum" id="meta-spend">—</div>
+        <div class="kpi-delta delta-neutral" id="meta-spend-sub">Catherine Hickem account</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Leads</div>
+        <div class="kpi-value green" id="meta-leads">—</div>
+        <div class="kpi-delta delta-neutral" id="meta-cpl">CPL: —</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Clicks</div>
+        <div class="kpi-value" id="meta-clicks">—</div>
+        <div class="kpi-delta delta-neutral" id="meta-ctr">CTR: —</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Impressions</div>
+        <div class="kpi-value" id="meta-impressions">—</div>
+        <div class="kpi-delta delta-neutral" id="meta-cpm-sub">CPM: —</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Daily Spend <span class="source-badge source-live">Live</span></div>
+        <div style="height:220px;"><canvas id="metaDailyChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Daily Leads <span class="source-badge source-live">Live</span></div>
+        <div style="height:220px;"><canvas id="metaLeadsChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="kpi">
+        <div class="kpi-label">CPM</div>
+        <div class="kpi-value" id="meta-cpm">—</div>
+        <div class="kpi-delta delta-neutral">Cost per 1k impressions</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">CPC</div>
+        <div class="kpi-value" id="meta-cpc">—</div>
+        <div class="kpi-delta delta-neutral">Cost per click</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Active Campaigns</div>
+        <div class="kpi-value plum" id="meta-campaigns">4</div>
+        <div class="kpi-delta delta-neutral">Catherine Hickem</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Purchases</div>
+        <div class="kpi-value" id="meta-purchases">—</div>
+        <div class="kpi-delta delta-neutral">Tracked conversions</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// ── CONFIG ──
+const WORKER_URL  = 'https://restless-wildflower-1f9falign-proxy.nick-0f0.workers.dev';
+const META_ACCT   = '1418314416615641';
+const WJ_ID       = '25';
+
+Chart.defaults.font  = { family: "'DM Mono', monospace", size: 10 };
+Chart.defaults.color = '#5e5470';
+
+let charts      = {};
+let activeRange = { startTime: new Date(Date.now() - 30*86400000).getTime(), endTime: Date.now() };
+let lastMeta    = null;
+let lastWJ      = null;
+
+// ── STATUS ──
+function setStatus(state) {
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-dot' + (state === 'loading' ? ' loading' : state === 'error' ? ' error' : '');
+}
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+function formatMoney(n) {
+  if (!n || n === 0) return '$0';
+  if (n >= 1000000)  return '$' + (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000)     return '$' + (n/1000).toFixed(1) + 'k';
+  return '$' + n.toFixed(2);
+}
+
+// ── TABS ──
+function switchTab(el, panel) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-' + panel).classList.add('active');
+  setTimeout(() => { Object.values(charts).forEach(c => c?.resize?.()); }, 50);
+}
+
+// ── DATE RANGE ──
+function setPreset(el, preset) {
+  document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const now = new Date();
+  let start;
+  if (preset === '7d')  start = new Date(now - 7  * 86400000);
+  if (preset === '30d') start = new Date(now - 30 * 86400000);
+  if (preset === '90d') start = new Date(now - 90 * 86400000);
+  if (preset === 'mtd') start = new Date(now.getFullYear(), now.getMonth(), 1);
+  activeRange = { startTime: start.getTime(), endTime: now.getTime() };
+  document.getElementById('dateFrom').value = '';
+  document.getElementById('dateTo').value   = '';
+  loadAllData();
+}
+
+function applyCustomRange() {
+  const from = document.getElementById('dateFrom').value;
+  const to   = document.getElementById('dateTo').value;
+  if (!from || !to) return;
+  document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+  activeRange = { startTime: new Date(from).getTime(), endTime: new Date(to + 'T23:59:59').getTime() };
+  loadAllData();
+}
+
+// ── FETCH WEBINAR ──
+async function fetchWebinar() {
+  try {
+    setStatus('loading');
+    const controller = new AbortController();
+    const timeout    = setTimeout(() => controller.abort(), 10000);
+    const res  = await fetch(`${WORKER_URL}/webinar/summary?webinar_id=${WJ_ID}`, { signal: controller.signal });
+    clearTimeout(timeout);
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      setText('wj-registrants', 'Error');
+      setText('wj-webinar-name', data.error || 'Check worker logs');
+      return;
+    }
+    lastWJ = data;
+    renderWebinarData(data);
+    setStatus('live');
+    setText('data-status', 'WJ Live · Meta Live');
+    setText('last-refresh', 'Updated ' + new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }));
+  } catch(err) {
+    setStatus('error');
+    setText('wj-registrants', err.name === 'AbortError' ? 'Timeout' : 'Error');
+    setText('wj-webinar-name', err.message);
+  }
+}
+
+// ── RENDER WEBINAR ──
+function renderWebinarData(d) {
+  const { webinar, stats, dailyRegs, recent } = d;
+
+  setText('wj-registrants',   stats.registrants);
+  setText('wj-webinar-name',  webinar.name || 'PACT Webinar');
+  setText('wj-attended',      stats.attended);
+  setText('wj-showrate',      `${stats.showRate}% show rate`);
+  setText('wj-noshow',        stats.noShowed);
+  setText('wj-showrate-val',  `${stats.showRate}%`);
+
+  // Overview funnel
+  const reg    = stats.registrants || 0;
+  const att    = stats.attended    || 0;
+  const noShow = stats.noShowed    || 0;
+  const attPct    = reg > 0 ? Math.round(att    / reg * 100) : 0;
+  const noShowPct = reg > 0 ? Math.round(noShow / reg * 100) : 0;
+
+  setText('ov-registrants',    reg);
+  setText('ov-reg-sub',        webinar.name || 'PACT Webinar');
+  setText('ov-showrate',       `${stats.showRate}%`);
+  setText('ov-showrate-sub',   `${att} attended of ${reg} registered`);
+  setText('ov-wj-reg',         reg);
+  setText('ov-wj-att',         att);
+  setText('ov-wj-att-pct',     `${attPct}%`);
+  setText('ov-wj-noshow',      noShow);
+  setText('ov-wj-noshow-pct',  `${noShowPct}%`);
+  setText('ov-wj-name',        webinar.name || 'PACT Webinar');
+
+  const attBar    = document.getElementById('ov-wj-att-bar');
+  const noShowBar = document.getElementById('ov-wj-noshow-bar');
+  if (attBar)    attBar.style.width    = Math.max(attPct,    2) + '%';
+  if (noShowBar) noShowBar.style.width = Math.max(noShowPct, 2) + '%';
+
+  // Overview funnel card
+  const el = document.getElementById('overviewFunnel');
+  if (el) {
+    const steps = [
+      { label: 'Leads (Meta)',   count: '—',  pct: 100, bar: 100, cls: '' },
+      { label: 'Registered (WJ)', count: reg,  pct: 100, bar: 100, cls: '' },
+      { label: 'Attended',        count: att,  pct: attPct, bar: attPct, cls: 'green-bar' },
+    ];
+    el.innerHTML = steps.map(s => `
+      <div class="funnel-step">
+        <div class="funnel-label-row">
+          <span class="funnel-name">${s.label}</span>
+          <div class="funnel-nums">
+            <span class="funnel-count">${s.count}</span>
+            <span class="funnel-pct">${s.pct}%</span>
+          </div>
+        </div>
+        <div class="funnel-bar-bg"><div class="funnel-bar ${s.cls}" style="width:${Math.max(s.bar,2)}%"></div></div>
+      </div>
+    `).join('');
+  }
+
+  // Daily chart
+  if (charts.wjDaily) charts.wjDaily.destroy();
+  const dCtx = document.getElementById('wjDailyChart');
+  if (dCtx) {
+    const sorted = Object.entries(dailyRegs).sort((a,b) => a[0].localeCompare(b[0]));
+    charts.wjDaily = new Chart(dCtx, {
+      type: 'bar',
+      data: {
+        labels: sorted.map(([d]) => d.slice(5)),
+        datasets: [{ label: 'Registrations', data: sorted.map(([,v]) => v), backgroundColor: 'rgba(162,112,208,0.65)', borderRadius: 3 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#5e5470', font: { size: 9 }, maxRotation: 45 } },
+          y: { ticks: { color: '#5e5470' }, beginAtZero: true, precision: 0 }
+        }
+      }
+    });
+  }
+
+  // Attendance donut
+  if (charts.wjAttendance) charts.wjAttendance.destroy();
+  const aCtx = document.getElementById('wjAttendanceChart');
+  if (aCtx) {
+    charts.wjAttendance = new Chart(aCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Attended', 'No-Show'],
+        datasets: [{ data: [att, noShow], backgroundColor: ['rgba(126,220,176,0.8)', 'rgba(224,120,120,0.7)'], borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { color: '#ede8f5', font: { size: 11 } } } },
+        cutout: '62%'
+      }
+    });
+  }
+
+  // Registrants table
+  const tbody = document.getElementById('wjRegistrantsTable');
+  if (tbody) {
+    if (!recent || recent.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">No registrants found</td></tr>';
+    } else {
+      tbody.innerHTML = recent.map(r => {
+        const date     = r.registered_at ? r.registered_at.slice(0,10) : '—';
+        const attended = r.attended
+          ? '<span style="color:var(--green);">✓ Yes</span>'
+          : '<span style="color:var(--text-muted);">—</span>';
+        return `<tr>
+          <td style="font-weight:500;">${r.name}</td>
+          <td style="color:var(--text-muted);font-size:11px;">${r.email}</td>
+          <td style="color:var(--text-muted);">${date}</td>
+          <td>${attended}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+}
+
+// ── FETCH META ──
+async function fetchMeta() {
+  try {
+    const start = new Date(activeRange.startTime).toISOString().slice(0,10);
+    const end   = new Date(activeRange.endTime).toISOString().slice(0,10);
+    const controller = new AbortController();
+    const timeout    = setTimeout(() => controller.abort(), 10000);
+    // Pass single account override via query param — worker already handles both accounts
+    // We filter on the client side to only show PACT account
+    const res  = await fetch(`${WORKER_URL}/meta/summary?start=${start}&end=${end}`, { signal: controller.signal });
+    clearTimeout(timeout);
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      setText('meta-spend', 'Error');
+      setText('meta-spend-sub', data.error || 'Check worker');
+      return;
+    }
+    lastMeta = data;
+    renderMetaData(data);
+  } catch(err) {
+    setText('meta-spend', err.name === 'AbortError' ? 'Timeout' : 'Error');
+    setText('meta-spend-sub', err.message);
+  }
+}
+
+// ── RENDER META ──
+function renderMetaData(d) {
+  // Pull only the PACT account from the breakdown
+  const accounts = d.accounts || [];
+  const pact     = accounts.find(a => a.accountId === META_ACCT) || d.summary || {};
+
+  const spend       = pact.spend       || 0;
+  const leads       = pact.leads       || 0;
+  const clicks      = pact.clicks      || 0;
+  const impressions = pact.impressions  || 0;
+  const purchases   = pact.purchases   || 0;
+  const cpl         = pact.cpl         || (leads > 0 ? spend / leads : 0);
+  const ctr         = pact.ctr         || 0;
+  const cpm         = pact.cpm         || 0;
+  const cpc         = pact.cpc         || 0;
+
+  // Ads tab KPIs
+  setText('meta-spend',       formatMoney(spend));
+  setText('meta-spend-sub',   'Catherine Hickem account');
+  setText('meta-leads',       leads.toLocaleString());
+  setText('meta-cpl',         `CPL: ${cpl > 0 ? formatMoney(cpl) : '—'}`);
+  setText('meta-clicks',      clicks.toLocaleString());
+  setText('meta-ctr',         `CTR: ${typeof ctr === 'number' ? ctr.toFixed(2) : ctr}%`);
+  setText('meta-impressions', impressions.toLocaleString());
+  setText('meta-cpm-sub',     `CPM: ${cpm > 0 ? formatMoney(cpm) : '—'}`);
+  setText('meta-cpm',         cpm > 0 ? formatMoney(cpm) : '—');
+  setText('meta-cpc',         cpc > 0 ? formatMoney(cpc) : '—');
+  setText('meta-purchases',   purchases);
+
+  // Overview KPIs
+  setText('ov-spend',      formatMoney(spend));
+  setText('ov-spend-sub',  `${leads} leads · ${impressions.toLocaleString()} impressions`);
+  setText('ov-leads',      leads.toLocaleString());
+  setText('ov-cpl',        `CPL: ${cpl > 0 ? formatMoney(cpl) : '—'}`);
+  setText('ov-cpl-card',   cpl > 0 ? formatMoney(cpl) : '—');
+  setText('ov-cpl-sub',    cpl > 0 ? `${leads} leads · ${formatMoney(spend)} spend` : 'Awaiting Meta data');
+  setText('ov-ctr-card',   `${typeof ctr === 'number' ? ctr.toFixed(2) : ctr}%`);
+
+  // Cost per registrant
+  if (lastWJ) {
+    const reg = lastWJ.stats.registrants || 0;
+    const cpr = reg > 0 ? spend / reg : 0;
+    setText('ov-cpr-card', cpr > 0 ? formatMoney(cpr) : '—');
+    setText('ov-cpr-sub',  cpr > 0 ? `${formatMoney(spend)} spend · ${reg} registrants` : 'Awaiting data');
+
+    // Update overview funnel lead count now that we have it
+    const el = document.getElementById('overviewFunnel');
+    if (el && el.children.length > 0) {
+      const firstCount = el.querySelector('.funnel-count');
+      if (firstCount) firstCount.textContent = leads.toLocaleString();
+    }
+  }
+
+  // Daily breakdown — filter to PACT account from daily map
+  const daily  = d.daily || {};
+  const sorted = Object.entries(daily).sort((a,b) => a[0].localeCompare(b[0]));
+
+  // Spend chart
+  if (charts.metaDaily) charts.metaDaily.destroy();
+  const sCtx = document.getElementById('metaDailyChart');
+  if (sCtx) {
+    charts.metaDaily = new Chart(sCtx, {
+      type: 'bar',
+      data: {
+        labels: sorted.map(([d]) => d.slice(5)),
+        datasets: [{ label: 'Spend ($)', data: sorted.map(([,v]) => v.spend || 0), backgroundColor: 'rgba(162,112,208,0.65)', borderRadius: 3 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#5e5470', font: { size: 9 }, maxRotation: 45 } },
+          y: { ticks: { color: '#5e5470', callback: v => '$' + v }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  // Leads chart
+  if (charts.metaLeads) charts.metaLeads.destroy();
+  const lCtx = document.getElementById('metaLeadsChart');
+  if (lCtx) {
+    charts.metaLeads = new Chart(lCtx, {
+      type: 'line',
+      data: {
+        labels: sorted.map(([d]) => d.slice(5)),
+        datasets: [{
+          label: 'Leads',
+          data: sorted.map(([,v]) => v.leads || 0),
+          borderColor: 'rgba(126,220,176,0.9)',
+          backgroundColor: 'rgba(126,220,176,0.07)',
+          borderWidth: 2, pointRadius: 3, tension: 0.4, fill: true
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#5e5470', font: { size: 9 }, maxRotation: 45 } },
+          y: { ticks: { color: '#5e5470' }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  // Overview spend+leads chart
+  if (charts.overviewSpend) charts.overviewSpend.destroy();
+  const oCtx = document.getElementById('overviewSpendChart');
+  if (oCtx) {
+    charts.overviewSpend = new Chart(oCtx, {
+      type: 'bar',
+      data: {
+        labels: sorted.map(([d]) => d.slice(5)),
+        datasets: [
+          { label: 'Spend ($)', data: sorted.map(([,v]) => v.spend || 0), backgroundColor: 'rgba(162,112,208,0.3)', borderColor: 'rgba(162,112,208,0.8)', borderWidth: 1, yAxisID: 'y', order: 2 },
+          { label: 'Leads',     data: sorted.map(([,v]) => v.leads || 0), type: 'line', borderColor: 'rgba(126,220,176,0.9)', backgroundColor: 'rgba(126,220,176,0.06)', borderWidth: 2, pointRadius: 2, tension: 0.4, yAxisID: 'y2', fill: true, order: 1 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x:  { grid: { display: false }, ticks: { color: '#5e5470', maxRotation: 0, maxTicksLimit: 8, font: { size: 9 } } },
+          y:  { grid: { color: 'rgba(255,255,255,0.03)' }, position: 'left',  ticks: { callback: v => '$' + v, color: '#5e5470' } },
+          y2: { grid: { display: false },                  position: 'right', ticks: { color: '#5e5470' } }
+        }
+      }
+    });
+  }
+}
+
+// ── LOAD ALL ──
+function loadAllData() {
+  fetchWebinar();
+  fetchMeta();
+}
+
+// ── INIT ──
+loadAllData();
+setInterval(loadAllData, 15 * 60 * 1000);
+</script>
+</body>
+</html>
