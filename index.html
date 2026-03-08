@@ -573,9 +573,9 @@ header {
         <div class="kpi-delta delta-neutral" id="ov-showrate-sub">—</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">Booked Calls <span class="source-badge source-live">GHL</span></div>
+        <div class="kpi-label">Booked Calls <span class="source-badge source-live">GHL · Period</span></div>
         <div class="kpi-value plum" id="ov-booked">—</div>
-        <div class="kpi-delta delta-neutral" id="ov-booked-sub">Next 30 days</div>
+        <div class="kpi-delta delta-neutral" id="ov-booked-sub">selected period</div>
       </div>
     </div>
 
@@ -1754,8 +1754,8 @@ function renderGHLData(d) {
   }
 
   // Overview: booked calls
-  setText('ov-booked',     bookedCalls.total);
-  setText('ov-booked-sub', `${bookedCalls.today} today`);
+  setText('ov-booked',     bookedCalls.inRange ?? bookedCalls.total);
+  setText('ov-booked-sub', `selected period · ${bookedCalls.today} today`);
 
   calcConversionRate();
 }
