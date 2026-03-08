@@ -1804,7 +1804,7 @@ function renderStripeData(d) {
   const totalFees  = d.fees?.total         || 0;
   const procFees   = d.fees?.processing    || 0;
   const appFees    = d.fees?.application   || 0;
-  const trueNet    = d.net?.total          || (gross - refunds - totalFees);
+  const trueNet    = gross - refunds - totalFees;
   const avgTx      = count > 0 ? gross / count : 0;
   const refPct     = gross > 0 ? Math.round(refunds   / gross * 100) : 0;
   const feesPct    = gross > 0 ? Math.round(totalFees / gross * 100) : 0;
