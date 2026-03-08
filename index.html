@@ -392,6 +392,7 @@ header {
     <button class="tab" onclick="switchTab(this,'webinar')">Webinar <span class="source-badge source-live" style="margin-left:6px">Live</span></button>
     <button class="tab" onclick="switchTab(this,'ads')">Meta Ads <span class="source-badge source-live" style="margin-left:6px">Live</span></button>
     <button class="tab" onclick="switchTab(this,'ghl')">Pipeline <span class="source-badge source-live" style="margin-left:6px">GHL</span></button>
+    <button class="tab" onclick="switchTab(this,'stripe')">Revenue <span class="source-badge source-live" style="margin-left:6px">Stripe</span></button>
   </div>
 
   <div id="errorBanner" class="error-banner"></div>
@@ -419,6 +420,11 @@ header {
         <div class="kpi-label">Show Rate <span class="source-badge source-live">Live</span></div>
         <div class="kpi-value green" id="ov-showrate">—</div>
         <div class="kpi-delta delta-neutral" id="ov-showrate-sub">—</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Gross Revenue <span class="source-badge source-live">Stripe</span></div>
+        <div class="kpi-value" style="color:var(--green);" id="ov-revenue">—</div>
+        <div class="kpi-delta delta-neutral" id="ov-revenue-sub">Loading...</div>
       </div>
     </div>
 
@@ -718,6 +724,83 @@ header {
         <thead><tr><th>Name</th><th>Time</th><th>Status</th></tr></thead>
         <tbody id="ghlApptsTable">
           <tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- ═══ STRIPE REVENUE ═══ -->
+  <div class="panel" id="panel-stripe">
+
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="kpi">
+        <div class="kpi-label">Gross Revenue <span class="source-badge source-live">Stripe</span></div>
+        <div class="kpi-value plum" id="stripe-revenue">—</div>
+        <div class="kpi-delta delta-neutral" id="stripe-revenue-sub">— transactions</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Net Revenue <span class="source-badge source-live">Stripe</span></div>
+        <div class="kpi-value green" id="stripe-net">—</div>
+        <div class="kpi-delta delta-neutral">After refunds</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Refunds <span class="source-badge source-live">Stripe</span></div>
+        <div class="kpi-value red" id="stripe-refunds">—</div>
+        <div class="kpi-delta delta-neutral" id="stripe-refund-count">— refunds</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Disputes <span class="source-badge source-live">Stripe</span></div>
+        <div class="kpi-value" id="stripe-disputes" style="color:var(--amber);">—</div>
+        <div class="kpi-delta delta-neutral">Open disputes</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px;">
+      <div class="card">
+        <div class="card-title">Daily Transactions (Last 30 Days) <span class="source-badge source-live">Stripe</span></div>
+        <div class="chart-wrap" style="height:220px;">
+          <canvas id="stripeDailyChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Revenue Breakdown</div>
+        <div style="padding:16px 0;">
+          <div class="funnel-step">
+            <div class="funnel-label-row">
+              <span class="funnel-name">Gross Revenue</span>
+              <div class="funnel-nums"><span class="funnel-count" id="stripe-gross-bar-val">—</span></div>
+            </div>
+            <div class="funnel-bar-bg"><div class="funnel-bar" style="width:100%;background:var(--plum);opacity:0.7;"></div></div>
+          </div>
+          <div class="funnel-step" style="margin-top:14px;">
+            <div class="funnel-label-row">
+              <span class="funnel-name">Refunds</span>
+              <div class="funnel-nums"><span class="funnel-count" id="stripe-refund-bar-val">—</span><span class="funnel-pct" id="stripe-refund-pct" style="color:var(--red);">—</span></div>
+            </div>
+            <div class="funnel-bar-bg"><div class="funnel-bar rose-bar" id="stripe-refund-bar" style="width:0%;"></div></div>
+          </div>
+          <div class="funnel-step" style="margin-top:14px;">
+            <div class="funnel-label-row">
+              <span class="funnel-name">Net Revenue</span>
+              <div class="funnel-nums"><span class="funnel-count" id="stripe-net-bar-val">—</span><span class="funnel-pct" id="stripe-net-pct" style="color:var(--green);">—</span></div>
+            </div>
+            <div class="funnel-bar-bg"><div class="funnel-bar green-bar" id="stripe-net-bar" style="width:0%;"></div></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+          <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;">Avg Transaction Size</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--plum-light);" id="stripe-avg-tx">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title">Recent Transactions <span class="source-badge source-live">Stripe Live</span></div>
+      <table class="data-table">
+        <thead><tr><th>Customer</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody id="stripeChargesTable">
+          <tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
         </tbody>
       </table>
     </div>
@@ -1229,11 +1312,109 @@ function renderGHLData(d) {
   }
 }
 
+// ── FETCH STRIPE ──
+async function fetchStripe() {
+  try {
+    const controller = new AbortController();
+    const timeout    = setTimeout(() => controller.abort(), 12000);
+    const res  = await fetch(`${WORKER_URL}/stripe/summary?startTime=${activeRange.startTime}&endTime=${activeRange.endTime}`, { signal: controller.signal });
+    clearTimeout(timeout);
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      setText('stripe-revenue', 'Error');
+      setText('stripe-revenue-sub', data.error || 'Check worker');
+      return;
+    }
+    renderStripeData(data);
+  } catch(err) {
+    setText('stripe-revenue', err.name === 'AbortError' ? 'Timeout' : 'Error');
+  }
+}
+
+// ── RENDER STRIPE ──
+function renderStripeData(d) {
+  const gross    = d.revenue?.total    || 0;
+  const count    = d.revenue?.count    || 0;
+  const refunds  = d.refunds?.total    || 0;
+  const refCount = d.refunds?.count    || 0;
+  const disputes = d.disputes?.count   || 0;
+  const net      = gross - refunds;
+  const avgTx    = count > 0 ? gross / count : 0;
+  const refPct   = gross > 0 ? Math.round(refunds / gross * 100) : 0;
+  const netPct   = gross > 0 ? Math.round(net     / gross * 100) : 0;
+
+  setText('stripe-revenue',      formatMoney(gross));
+  setText('stripe-revenue-sub',  `${count} transactions`);
+  setText('stripe-net',          formatMoney(net));
+  setText('stripe-refunds',      formatMoney(refunds));
+  setText('stripe-refund-count', `${refCount} refund${refCount !== 1 ? 's' : ''}`);
+  setText('stripe-disputes',     disputes);
+  setText('stripe-avg-tx',       formatMoney(avgTx));
+
+  // Breakdown bars
+  setText('stripe-gross-bar-val', formatMoney(gross));
+  setText('stripe-refund-bar-val', formatMoney(refunds));
+  setText('stripe-refund-pct',    `${refPct}%`);
+  setText('stripe-net-bar-val',   formatMoney(net));
+  setText('stripe-net-pct',       `${netPct}%`);
+
+  const refBar = document.getElementById('stripe-refund-bar');
+  const netBar = document.getElementById('stripe-net-bar');
+  if (refBar) refBar.style.width = Math.max(refPct, 1) + '%';
+  if (netBar) netBar.style.width = Math.max(netPct, 1) + '%';
+
+  // Daily chart
+  if (charts.stripeDaily) charts.stripeDaily.destroy();
+  const dCtx = document.getElementById('stripeDailyChart');
+  if (dCtx && d.dailySales) {
+    const sorted = Object.entries(d.dailySales).sort((a,b) => a[0].localeCompare(b[0]));
+    charts.stripeDaily = new Chart(dCtx, {
+      type: 'bar',
+      data: {
+        labels: sorted.map(([d]) => d.slice(5)),
+        datasets: [{ label: 'Transactions', data: sorted.map(([,v]) => v), backgroundColor: 'rgba(126,220,176,0.65)', borderRadius: 3 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#5e5470', font: { size: 9 }, maxRotation: 45 } },
+          y: { ticks: { color: '#5e5470' }, beginAtZero: true, precision: 0 }
+        }
+      }
+    });
+  }
+
+  // Transactions table
+  const tbody = document.getElementById('stripeChargesTable');
+  if (tbody) {
+    if (!d.recentCharges || d.recentCharges.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">No transactions found</td></tr>';
+    } else {
+      tbody.innerHTML = d.recentCharges.map(c => {
+        const date   = c.created ? new Date(c.created * 1000).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '—';
+        const amount = formatMoney(c.amount);
+        return `<tr>
+          <td style="font-weight:500;">${c.customer || 'Unknown'}</td>
+          <td style="color:var(--green);">${amount}</td>
+          <td style="color:var(--text-muted);">${date}</td>
+          <td><span style="color:var(--green);font-size:10px;">✓ ${c.status}</span></td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  // Update overview revenue card if it exists
+  setText('ov-revenue',     formatMoney(gross));
+  setText('ov-revenue-sub', `Net: ${formatMoney(net)} · ${refCount} refunds`);
+}
+
 // ── LOAD ALL ──
 function loadAllData() {
   fetchWebinar();
   fetchMeta();
   fetchGHL();
+  fetchStripe();
 }
 
 // ── INIT ──
