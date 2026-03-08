@@ -489,56 +489,118 @@ header {
   <!-- ═══ WEBINAR ═══ -->
   <div class="panel" id="panel-webinar">
 
-    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <!-- Combined totals bar -->
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 8px;">
       <div class="kpi">
-        <div class="kpi-label">Registrants <span class="source-badge source-live">WJ Live</span></div>
-        <div class="kpi-value plum" id="wj-registrants">—</div>
-        <div class="kpi-delta delta-neutral" id="wj-webinar-name">Loading...</div>
+        <div class="kpi-label">Total Registrants <span class="source-badge source-live">Both</span></div>
+        <div class="kpi-value plum" id="wj-total-reg">—</div>
+        <div class="kpi-delta delta-neutral">Live + Evergreen</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">Attended <span class="source-badge source-live">WJ Live</span></div>
-        <div class="kpi-value green" id="wj-attended">—</div>
-        <div class="kpi-delta delta-neutral" id="wj-showrate">Loading...</div>
+        <div class="kpi-label">Total Attended <span class="source-badge source-live">Both</span></div>
+        <div class="kpi-value green" id="wj-total-att">—</div>
+        <div class="kpi-delta delta-neutral">Live + Evergreen</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">No-Show <span class="source-badge source-live">WJ Live</span></div>
-        <div class="kpi-value red" id="wj-noshow">—</div>
-        <div class="kpi-delta delta-neutral">Registered, didn't attend</div>
+        <div class="kpi-label">Total No-Show <span class="source-badge source-live">Both</span></div>
+        <div class="kpi-value red" id="wj-total-noshow">—</div>
+        <div class="kpi-delta delta-neutral">Live + Evergreen</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">Show Rate <span class="source-badge source-live">WJ Live</span></div>
-        <div class="kpi-value" id="wj-showrate-val">—</div>
-        <div class="kpi-delta delta-neutral">Of completed sessions</div>
+        <div class="kpi-label">Combined Show Rate <span class="source-badge source-live">Both</span></div>
+        <div class="kpi-value" id="wj-total-showrate">—</div>
+        <div class="kpi-delta delta-neutral">Attended ÷ registered</div>
       </div>
     </div>
 
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-title">Daily Registrations (Last 30 Days) <span class="source-badge source-live">WJ Live</span></div>
-        <div class="chart-wrap" style="height:220px;">
-          <canvas id="wjDailyChart"></canvas>
+    <!-- Side by side -->
+    <div class="grid-2" style="margin-top:20px;">
+
+      <!-- LIVE -->
+      <div>
+        <div style="font-size:10px;letter-spacing:0.12em;color:var(--plum-light);text-transform:uppercase;margin-bottom:10px;padding-left:2px;">Live Webinar · ID 25</div>
+        <div class="kpi-grid" style="grid-template-columns: repeat(2,1fr);gap:10px;margin-bottom:14px;">
+          <div class="kpi">
+            <div class="kpi-label">Registrants</div>
+            <div class="kpi-value plum" id="live-registrants">—</div>
+            <div class="kpi-delta delta-neutral" id="live-webinar-name">Loading...</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Show Rate</div>
+            <div class="kpi-value" id="live-showrate-val">—</div>
+            <div class="kpi-delta delta-neutral" id="live-showrate">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Attended</div>
+            <div class="kpi-value green" id="live-attended">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">No-Show</div>
+            <div class="kpi-value red" id="live-noshow">—</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Daily Registrations</div>
+          <div class="chart-wrap" style="height:180px;"><canvas id="wjLiveDailyChart"></canvas></div>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <div class="card-title">Attended vs No-Show</div>
+          <div class="chart-wrap" style="height:180px;"><canvas id="wjLiveAttChart"></canvas></div>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <div class="card-title">Recent Registrants</div>
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Date</th><th>Att.</th></tr></thead>
+            <tbody id="liveRegistrantsTable">
+              <tr><td colspan="4" style="color:var(--text-muted);padding:12px 0;">Loading...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
-      <div class="card">
-        <div class="card-title">Attended vs No-Show <span class="source-badge source-live">WJ Live</span></div>
-        <div class="chart-wrap" style="height:220px;">
-          <canvas id="wjAttendanceChart"></canvas>
+
+      <!-- EVERGREEN -->
+      <div>
+        <div style="font-size:10px;letter-spacing:0.12em;color:var(--rose);text-transform:uppercase;margin-bottom:10px;padding-left:2px;">Evergreen Webinar · ID 55</div>
+        <div class="kpi-grid" style="grid-template-columns: repeat(2,1fr);gap:10px;margin-bottom:14px;">
+          <div class="kpi">
+            <div class="kpi-label">Registrants</div>
+            <div class="kpi-value" style="color:var(--rose);" id="eg-registrants">—</div>
+            <div class="kpi-delta delta-neutral" id="eg-webinar-name">Loading...</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Show Rate</div>
+            <div class="kpi-value" id="eg-showrate-val">—</div>
+            <div class="kpi-delta delta-neutral" id="eg-showrate">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Attended</div>
+            <div class="kpi-value green" id="eg-attended">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">No-Show</div>
+            <div class="kpi-value red" id="eg-noshow">—</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Daily Registrations</div>
+          <div class="chart-wrap" style="height:180px;"><canvas id="wjEgDailyChart"></canvas></div>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <div class="card-title">Attended vs No-Show</div>
+          <div class="chart-wrap" style="height:180px;"><canvas id="wjEgAttChart"></canvas></div>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <div class="card-title">Recent Registrants</div>
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Date</th><th>Att.</th></tr></thead>
+            <tbody id="egRegistrantsTable">
+              <tr><td colspan="4" style="color:var(--text-muted);padding:12px 0;">Loading...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
-    </div>
 
-    <div class="card">
-      <div class="card-title">Recent Registrants <span class="source-badge source-live">WJ Live</span></div>
-      <table class="data-table">
-        <thead>
-          <tr><th>Name</th><th>Email</th><th>Registered</th><th>Attended</th></tr>
-        </thead>
-        <tbody id="wjRegistrantsTable">
-          <tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
-        </tbody>
-      </table>
     </div>
-
   </div>
 
   <!-- ═══ META ADS ═══ -->
@@ -607,9 +669,10 @@ header {
 
 <script>
 // ── CONFIG ──
-const WORKER_URL  = 'https://restless-wildflower-1f9falign-proxy.nick-0f0.workers.dev';
+const WORKER_URL  = 'https://pact-dashboard-proxy.nick-0f0.workers.dev';
 const META_ACCT   = '1418314416615641';
-const WJ_ID       = '25';
+const WJ_LIVE_ID  = '25';
+const WJ_EG_ID    = '55';
 
 Chart.defaults.font  = { family: "'DM Mono', monospace", size: 10 };
 Chart.defaults.color = '#5e5470';
@@ -618,6 +681,7 @@ let charts      = {};
 let activeRange = { startTime: new Date(Date.now() - 30*86400000).getTime(), endTime: Date.now() };
 let lastMeta    = null;
 let lastWJ      = null;
+let lastWJEg    = null;
 
 // ── STATUS ──
 function setStatus(state) {
@@ -673,94 +737,66 @@ function applyCustomRange() {
 async function fetchWebinar() {
   try {
     setStatus('loading');
-    const controller = new AbortController();
-    const timeout    = setTimeout(() => controller.abort(), 10000);
-    const res  = await fetch(`${WORKER_URL}/webinar/summary?webinar_id=${WJ_ID}`, { signal: controller.signal });
-    clearTimeout(timeout);
-    const data = await res.json();
-    if (!res.ok || data.error) {
-      setText('wj-registrants', 'Error');
-      setText('wj-webinar-name', data.error || 'Check worker logs');
-      return;
-    }
-    lastWJ = data;
-    renderWebinarData(data);
+
+    const fetchOne = async (id) => {
+      const controller = new AbortController();
+      const timeout    = setTimeout(() => controller.abort(), 15000);
+      const res  = await fetch(`${WORKER_URL}/webinar/summary?webinar_id=${id}`, { signal: controller.signal });
+      clearTimeout(timeout);
+      return res.json();
+    };
+
+    const [liveData, egData] = await Promise.all([
+      fetchOne(WJ_LIVE_ID),
+      fetchOne(WJ_EG_ID),
+    ]);
+
+    lastWJ   = liveData;
+    lastWJEg = egData;
+
+    renderWebinarSide('live', liveData);
+    renderWebinarSide('eg',   egData);
+    renderWebinarCombined(liveData, egData);
+
     setStatus('live');
     setText('data-status', 'WJ Live · Meta Live');
     setText('last-refresh', 'Updated ' + new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }));
   } catch(err) {
     setStatus('error');
-    setText('wj-registrants', err.name === 'AbortError' ? 'Timeout' : 'Error');
-    setText('wj-webinar-name', err.message);
+    setText('live-registrants', err.name === 'AbortError' ? 'Timeout' : 'Error');
+    setText('eg-registrants',   err.message);
   }
 }
 
-// ── RENDER WEBINAR ──
-function renderWebinarData(d) {
+// ── RENDER ONE WEBINAR SIDE ──
+function renderWebinarSide(prefix, d) {
+  if (!d || d.error) {
+    setText(`${prefix}-registrants`, 'Error');
+    setText(`${prefix}-webinar-name`, d?.error || 'No data');
+    return;
+  }
   const { webinar, stats, dailyRegs, recent } = d;
 
-  setText('wj-registrants',   stats.registrants);
-  setText('wj-webinar-name',  webinar.name || 'PACT Webinar');
-  setText('wj-attended',      stats.attended);
-  setText('wj-showrate',      `${stats.showRate}% show rate`);
-  setText('wj-noshow',        stats.noShowed);
-  setText('wj-showrate-val',  `${stats.showRate}%`);
+  setText(`${prefix}-registrants`,  stats.registrants);
+  setText(`${prefix}-webinar-name`, webinar.name || (prefix === 'live' ? 'Live Webinar' : 'Evergreen Webinar'));
+  setText(`${prefix}-attended`,     stats.attended);
+  setText(`${prefix}-noshow`,       stats.noShowed);
+  setText(`${prefix}-showrate-val`, `${stats.showRate}%`);
+  setText(`${prefix}-showrate`,     `${stats.showRate}% show rate`);
 
-  // Overview funnel
-  const reg    = stats.registrants || 0;
-  const att    = stats.attended    || 0;
-  const noShow = stats.noShowed    || 0;
-  const attPct    = reg > 0 ? Math.round(att    / reg * 100) : 0;
-  const noShowPct = reg > 0 ? Math.round(noShow / reg * 100) : 0;
-
-  setText('ov-registrants',    reg);
-  setText('ov-reg-sub',        webinar.name || 'PACT Webinar');
-  setText('ov-showrate',       `${stats.showRate}%`);
-  setText('ov-showrate-sub',   `${att} attended of ${reg} registered`);
-  setText('ov-wj-reg',         reg);
-  setText('ov-wj-att',         att);
-  setText('ov-wj-att-pct',     `${attPct}%`);
-  setText('ov-wj-noshow',      noShow);
-  setText('ov-wj-noshow-pct',  `${noShowPct}%`);
-  setText('ov-wj-name',        webinar.name || 'PACT Webinar');
-
-  const attBar    = document.getElementById('ov-wj-att-bar');
-  const noShowBar = document.getElementById('ov-wj-noshow-bar');
-  if (attBar)    attBar.style.width    = Math.max(attPct,    2) + '%';
-  if (noShowBar) noShowBar.style.width = Math.max(noShowPct, 2) + '%';
-
-  // Overview funnel card
-  const el = document.getElementById('overviewFunnel');
-  if (el) {
-    const steps = [
-      { label: 'Leads (Meta)',   count: '—',  pct: 100, bar: 100, cls: '' },
-      { label: 'Registered (WJ)', count: reg,  pct: 100, bar: 100, cls: '' },
-      { label: 'Attended',        count: att,  pct: attPct, bar: attPct, cls: 'green-bar' },
-    ];
-    el.innerHTML = steps.map(s => `
-      <div class="funnel-step">
-        <div class="funnel-label-row">
-          <span class="funnel-name">${s.label}</span>
-          <div class="funnel-nums">
-            <span class="funnel-count">${s.count}</span>
-            <span class="funnel-pct">${s.pct}%</span>
-          </div>
-        </div>
-        <div class="funnel-bar-bg"><div class="funnel-bar ${s.cls}" style="width:${Math.max(s.bar,2)}%"></div></div>
-      </div>
-    `).join('');
-  }
+  const color = prefix === 'live' ? 'rgba(162,112,208,0.65)' : 'rgba(232,164,184,0.65)';
 
   // Daily chart
-  if (charts.wjDaily) charts.wjDaily.destroy();
-  const dCtx = document.getElementById('wjDailyChart');
+  const dKey = `${prefix}Daily`;
+  if (charts[dKey]) charts[dKey].destroy();
+  const dCtx = document.getElementById(prefix === 'live' ? 'wjLiveDailyChart' : 'wjEgDailyChart');
   if (dCtx) {
     const sorted = Object.entries(dailyRegs).sort((a,b) => a[0].localeCompare(b[0]));
-    charts.wjDaily = new Chart(dCtx, {
+    charts[dKey] = new Chart(dCtx, {
       type: 'bar',
       data: {
         labels: sorted.map(([d]) => d.slice(5)),
-        datasets: [{ label: 'Registrations', data: sorted.map(([,v]) => v), backgroundColor: 'rgba(162,112,208,0.65)', borderRadius: 3 }]
+        datasets: [{ label: 'Registrations', data: sorted.map(([,v]) => v), backgroundColor: color, borderRadius: 3 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
@@ -774,14 +810,15 @@ function renderWebinarData(d) {
   }
 
   // Attendance donut
-  if (charts.wjAttendance) charts.wjAttendance.destroy();
-  const aCtx = document.getElementById('wjAttendanceChart');
+  const aKey = `${prefix}Att`;
+  if (charts[aKey]) charts[aKey].destroy();
+  const aCtx = document.getElementById(prefix === 'live' ? 'wjLiveAttChart' : 'wjEgAttChart');
   if (aCtx) {
-    charts.wjAttendance = new Chart(aCtx, {
+    charts[aKey] = new Chart(aCtx, {
       type: 'doughnut',
       data: {
         labels: ['Attended', 'No-Show'],
-        datasets: [{ data: [att, noShow], backgroundColor: ['rgba(126,220,176,0.8)', 'rgba(224,120,120,0.7)'], borderWidth: 0 }]
+        datasets: [{ data: [stats.attended, stats.noShowed], backgroundColor: ['rgba(126,220,176,0.8)', 'rgba(224,120,120,0.7)'], borderWidth: 0 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
@@ -792,7 +829,7 @@ function renderWebinarData(d) {
   }
 
   // Registrants table
-  const tbody = document.getElementById('wjRegistrantsTable');
+  const tbody = document.getElementById(`${prefix}RegistrantsTable`);
   if (tbody) {
     if (!recent || recent.length === 0) {
       tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">No registrants found</td></tr>';
@@ -800,7 +837,7 @@ function renderWebinarData(d) {
       tbody.innerHTML = recent.map(r => {
         const date     = r.registered_at ? r.registered_at.slice(0,10) : '—';
         const attended = r.attended
-          ? '<span style="color:var(--green);">✓ Yes</span>'
+          ? '<span style="color:var(--green);">✓</span>'
           : '<span style="color:var(--text-muted);">—</span>';
         return `<tr>
           <td style="font-weight:500;">${r.name}</td>
@@ -810,6 +847,63 @@ function renderWebinarData(d) {
         </tr>`;
       }).join('');
     }
+  }
+}
+
+// ── RENDER COMBINED TOTALS + OVERVIEW ──
+function renderWebinarCombined(liveData, egData) {
+  const ls = liveData?.stats  || { registrants:0, attended:0, noShowed:0 };
+  const es = egData?.stats    || { registrants:0, attended:0, noShowed:0 };
+
+  const totalReg    = ls.registrants + es.registrants;
+  const totalAtt    = ls.attended    + es.attended;
+  const totalNoShow = ls.noShowed    + es.noShowed;
+  const totalShow   = totalReg > 0 ? Math.round(totalAtt / totalReg * 100) : 0;
+
+  setText('wj-total-reg',     totalReg);
+  setText('wj-total-att',     totalAtt);
+  setText('wj-total-noshow',  totalNoShow);
+  setText('wj-total-showrate',`${totalShow}%`);
+
+  // Overview cards (use combined)
+  setText('ov-registrants',   totalReg);
+  setText('ov-reg-sub',       'Live + Evergreen');
+  setText('ov-showrate',      `${totalShow}%`);
+  setText('ov-showrate-sub',  `${totalAtt} attended of ${totalReg} registered`);
+  setText('ov-wj-reg',        totalReg);
+  setText('ov-wj-att',        totalAtt);
+  const attPct    = totalReg > 0 ? Math.round(totalAtt    / totalReg * 100) : 0;
+  const noShowPct = totalReg > 0 ? Math.round(totalNoShow / totalReg * 100) : 0;
+  setText('ov-wj-att-pct',    `${attPct}%`);
+  setText('ov-wj-noshow',     totalNoShow);
+  setText('ov-wj-noshow-pct', `${noShowPct}%`);
+  setText('ov-wj-name',       'Live + Evergreen combined');
+
+  const attBar    = document.getElementById('ov-wj-att-bar');
+  const noShowBar = document.getElementById('ov-wj-noshow-bar');
+  if (attBar)    attBar.style.width    = Math.max(attPct,    2) + '%';
+  if (noShowBar) noShowBar.style.width = Math.max(noShowPct, 2) + '%';
+
+  // Overview funnel
+  const el = document.getElementById('overviewFunnel');
+  if (el) {
+    const steps = [
+      { label: 'Leads (Meta)',    count: '—',       pct: 100,    bar: 100,    cls: '' },
+      { label: 'Registered (WJ)', count: totalReg,  pct: 100,    bar: 100,    cls: '' },
+      { label: 'Attended',        count: totalAtt,  pct: attPct, bar: attPct, cls: 'green-bar' },
+    ];
+    el.innerHTML = steps.map(s => `
+      <div class="funnel-step">
+        <div class="funnel-label-row">
+          <span class="funnel-name">${s.label}</span>
+          <div class="funnel-nums">
+            <span class="funnel-count">${s.count}</span>
+            <span class="funnel-pct">${s.pct}%</span>
+          </div>
+        </div>
+        <div class="funnel-bar-bg"><div class="funnel-bar ${s.cls}" style="width:${Math.max(s.bar,2)}%"></div></div>
+      </div>
+    `).join('');
   }
 }
 
@@ -876,9 +970,11 @@ function renderMetaData(d) {
   setText('ov-cpl-sub',    cpl > 0 ? `${leads} leads · ${formatMoney(spend)} spend` : 'Awaiting Meta data');
   setText('ov-ctr-card',   `${typeof ctr === 'number' ? ctr.toFixed(2) : ctr}%`);
 
-  // Cost per registrant
-  if (lastWJ) {
-    const reg = lastWJ.stats.registrants || 0;
+  // Cost per registrant — combined live + evergreen
+  if (lastWJ || lastWJEg) {
+    const liveReg = lastWJ?.stats?.registrants   || 0;
+    const egReg   = lastWJEg?.stats?.registrants || 0;
+    const reg     = liveReg + egReg;
     const cpr = reg > 0 ? spend / reg : 0;
     setText('ov-cpr-card', cpr > 0 ? formatMoney(cpr) : '—');
     setText('ov-cpr-sub',  cpr > 0 ? `${formatMoney(spend)} spend · ${reg} registrants` : 'Awaiting data');
