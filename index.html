@@ -769,25 +769,30 @@ header {
   <!-- ═══ STRIPE REVENUE ═══ -->
   <div class="panel" id="panel-stripe">
 
-    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
       <div class="kpi accent">
         <div class="kpi-label">Gross Revenue <span class="source-badge source-live">Stripe</span></div>
-        <div class="kpi-value plum" id="stripe-revenue">—</div>
-        <div class="kpi-delta delta-neutral" id="stripe-revenue-sub">— transactions</div>
+        <div class="kpi-value" id="stripe-revenue">—</div>
+        <div class="kpi-delta" id="stripe-revenue-sub" style="color:rgba(255,255,255,0.7);">— transactions</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">Net Revenue <span class="source-badge source-live">Stripe</span></div>
+        <div class="kpi-label">Net After Fees</div>
         <div class="kpi-value green" id="stripe-net">—</div>
-        <div class="kpi-delta delta-neutral">After refunds</div>
+        <div class="kpi-delta delta-neutral" id="stripe-fees-sub">Fees: —</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">Refunds <span class="source-badge source-live">Stripe</span></div>
+        <div class="kpi-label">Stripe Fees</div>
+        <div class="kpi-value" style="color:var(--amber);" id="stripe-fees">—</div>
+        <div class="kpi-delta delta-neutral" id="stripe-fees-pct-sub">— of gross</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Refunds</div>
         <div class="kpi-value red" id="stripe-refunds">—</div>
         <div class="kpi-delta delta-neutral" id="stripe-refund-count">— refunds</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">Disputes <span class="source-badge source-live">Stripe</span></div>
-        <div class="kpi-value" id="stripe-disputes" style="color:var(--amber);">—</div>
+        <div class="kpi-label">Disputes</div>
+        <div class="kpi-value" id="stripe-disputes" style="color:var(--rose);">—</div>
         <div class="kpi-delta delta-neutral">Open disputes</div>
       </div>
     </div>
@@ -801,7 +806,7 @@ header {
       </div>
       <div class="card">
         <div class="card-title">Revenue Breakdown</div>
-        <div style="padding:16px 0;">
+        <div style="padding:10px 0;">
           <div class="funnel-step">
             <div class="funnel-label-row">
               <span class="funnel-name">Gross Revenue</span>
@@ -809,24 +814,87 @@ header {
             </div>
             <div class="funnel-bar-bg"><div class="funnel-bar" style="width:100%;background:var(--plum);opacity:0.7;"></div></div>
           </div>
-          <div class="funnel-step" style="margin-top:14px;">
+          <div class="funnel-step" style="margin-top:12px;">
+            <div class="funnel-label-row">
+              <span class="funnel-name">Stripe Fees</span>
+              <div class="funnel-nums"><span class="funnel-count" id="stripe-fees-bar-val" style="font-size:17px;color:var(--amber);">—</span><span class="funnel-pct" id="stripe-fees-pct" style="color:var(--amber);">—</span></div>
+            </div>
+            <div class="funnel-bar-bg"><div class="funnel-bar" id="stripe-fees-bar" style="width:0%;background:linear-gradient(90deg,rgba(176,122,42,0.15),var(--amber));"></div></div>
+          </div>
+          <div class="funnel-step" style="margin-top:12px;">
             <div class="funnel-label-row">
               <span class="funnel-name">Refunds</span>
-              <div class="funnel-nums"><span class="funnel-count" id="stripe-refund-bar-val">—</span><span class="funnel-pct" id="stripe-refund-pct" style="color:var(--red);">—</span></div>
+              <div class="funnel-nums"><span class="funnel-count" id="stripe-refund-bar-val" style="font-size:17px;">—</span><span class="funnel-pct" id="stripe-refund-pct" style="color:var(--red);">—</span></div>
             </div>
             <div class="funnel-bar-bg"><div class="funnel-bar rose-bar" id="stripe-refund-bar" style="width:0%;"></div></div>
           </div>
-          <div class="funnel-step" style="margin-top:14px;">
+          <div class="funnel-step" style="margin-top:12px;">
             <div class="funnel-label-row">
-              <span class="funnel-name">Net Revenue</span>
+              <span class="funnel-name">Net to Bank</span>
               <div class="funnel-nums"><span class="funnel-count" id="stripe-net-bar-val">—</span><span class="funnel-pct" id="stripe-net-pct" style="color:var(--green);">—</span></div>
             </div>
             <div class="funnel-bar-bg"><div class="funnel-bar green-bar" id="stripe-net-bar" style="width:0%;"></div></div>
           </div>
         </div>
-        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
-          <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;">Avg Transaction Size</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--plum-light);" id="stripe-avg-tx">—</div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">Avg Transaction</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:var(--plum);" id="stripe-avg-tx">—</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">Total Deposited</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:var(--green);" id="stripe-deposited">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payouts / Bank Deposits -->
+    <div class="grid-2" style="margin-top:14px;">
+      <div class="card">
+        <div class="card-title">Bank Deposits <span class="source-badge source-live">Stripe Payouts</span></div>
+        <div id="stripe-next-payout" style="margin-bottom:16px;padding:12px 14px;background:var(--plum-dim);border:1px solid var(--lavender);border-radius:8px;display:none;">
+          <div style="font-size:10px;color:var(--plum);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Next Deposit</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--plum);" id="stripe-next-payout-amt">—</div>
+            <div style="text-align:right;">
+              <div style="font-size:11px;color:var(--text-mid);" id="stripe-next-payout-date">—</div>
+              <div style="font-size:10px;margin-top:2px;" id="stripe-next-payout-status">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Amount</th><th>Arrival Date</th><th>Method</th><th>Status</th></tr></thead>
+          <tbody id="stripePayoutsTable">
+            <tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Fee Detail <span class="source-badge source-live">Stripe</span></div>
+        <div style="display:flex;flex-direction:column;gap:14px;padding:4px 0 12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;color:var(--text-mid);">Processing Fees (2.9% + 30¢)</span>
+            <span style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--amber);" id="stripe-proc-fees">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;color:var(--text-mid);">Other / Application Fees</span>
+            <span style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text-mid);" id="stripe-app-fees">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;color:var(--text-mid);">Total Fees</span>
+            <span style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--amber);" id="stripe-total-fees-detail">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:12px;font-weight:600;color:var(--text);">Net After All Deductions</span>
+            <span style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--green);" id="stripe-true-net">—</span>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding:12px 14px;background:var(--green-dim);border:1px solid rgba(58,158,114,0.2);border-radius:8px;">
+          <div style="font-size:10px;color:var(--green);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Keep Rate</div>
+          <div style="font-size:12px;color:var(--text-mid);">You keep <span style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--green);" id="stripe-keep-rate">—</span> of every dollar charged after fees and refunds.</div>
         </div>
       </div>
     </div>
@@ -1371,35 +1439,103 @@ async function fetchStripe() {
 
 // ── RENDER STRIPE ──
 function renderStripeData(d) {
-  const gross    = d.revenue?.total    || 0;
-  const count    = d.revenue?.count    || 0;
-  const refunds  = d.refunds?.total    || 0;
-  const refCount = d.refunds?.count    || 0;
-  const disputes = d.disputes?.count   || 0;
-  const net      = gross - refunds;
-  const avgTx    = count > 0 ? gross / count : 0;
-  const refPct   = gross > 0 ? Math.round(refunds / gross * 100) : 0;
-  const netPct   = gross > 0 ? Math.round(net     / gross * 100) : 0;
+  const gross      = d.revenue?.total      || 0;
+  const count      = d.revenue?.count      || 0;
+  const refunds    = d.refunds?.total      || 0;
+  const refCount   = d.refunds?.count      || 0;
+  const disputes   = d.disputes?.count     || 0;
+  const totalFees  = d.fees?.total         || 0;
+  const procFees   = d.fees?.processing    || 0;
+  const appFees    = d.fees?.application   || 0;
+  const trueNet    = d.net?.total          || (gross - refunds - totalFees);
+  const avgTx      = count > 0 ? gross / count : 0;
+  const refPct     = gross > 0 ? Math.round(refunds   / gross * 100) : 0;
+  const feesPct    = gross > 0 ? Math.round(totalFees / gross * 100) : 0;
+  const netPct     = gross > 0 ? Math.round(trueNet   / gross * 100) : 0;
+  const keepRate   = gross > 0 ? (trueNet / gross * 100).toFixed(1) : '—';
+  const deposited  = d.payouts?.totalDeposited || 0;
 
+  // KPI cards
   setText('stripe-revenue',      formatMoney(gross));
-  setText('stripe-revenue-sub',  `${count} transactions`);
-  setText('stripe-net',          formatMoney(net));
+  setText('stripe-revenue-sub',  `${count} transaction${count !== 1 ? 's' : ''}`);
+  setText('stripe-net',          formatMoney(trueNet));
+  setText('stripe-fees-sub',     `Fees: ${formatMoney(totalFees)}`);
+  setText('stripe-fees',         formatMoney(totalFees));
+  setText('stripe-fees-pct-sub', `${feesPct}% of gross`);
   setText('stripe-refunds',      formatMoney(refunds));
   setText('stripe-refund-count', `${refCount} refund${refCount !== 1 ? 's' : ''}`);
   setText('stripe-disputes',     disputes);
   setText('stripe-avg-tx',       formatMoney(avgTx));
+  setText('stripe-deposited',    formatMoney(deposited));
 
   // Breakdown bars
-  setText('stripe-gross-bar-val', formatMoney(gross));
-  setText('stripe-refund-bar-val', formatMoney(refunds));
-  setText('stripe-refund-pct',    `${refPct}%`);
-  setText('stripe-net-bar-val',   formatMoney(net));
-  setText('stripe-net-pct',       `${netPct}%`);
+  setText('stripe-gross-bar-val',    formatMoney(gross));
+  setText('stripe-fees-bar-val',     formatMoney(totalFees));
+  setText('stripe-fees-pct',         `${feesPct}%`);
+  setText('stripe-refund-bar-val',   formatMoney(refunds));
+  setText('stripe-refund-pct',       `${refPct}%`);
+  setText('stripe-net-bar-val',      formatMoney(trueNet));
+  setText('stripe-net-pct',          `${netPct}%`);
 
-  const refBar = document.getElementById('stripe-refund-bar');
-  const netBar = document.getElementById('stripe-net-bar');
-  if (refBar) refBar.style.width = Math.max(refPct, 1) + '%';
-  if (netBar) netBar.style.width = Math.max(netPct, 1) + '%';
+  const feesBar = document.getElementById('stripe-fees-bar');
+  const refBar  = document.getElementById('stripe-refund-bar');
+  const netBar  = document.getElementById('stripe-net-bar');
+  if (feesBar) feesBar.style.width = Math.max(feesPct, 1) + '%';
+  if (refBar)  refBar.style.width  = Math.max(refPct,  1) + '%';
+  if (netBar)  netBar.style.width  = Math.max(netPct,  1) + '%';
+
+  // Fee detail card
+  setText('stripe-proc-fees',        formatMoney(procFees));
+  setText('stripe-app-fees',         formatMoney(appFees));
+  setText('stripe-total-fees-detail',formatMoney(totalFees));
+  setText('stripe-true-net',         formatMoney(trueNet));
+  setText('stripe-keep-rate',        keepRate !== '—' ? `${keepRate}%` : '—');
+
+  // Payouts / bank deposits table
+  const payoutsList = d.payouts?.list || [];
+  const nextPayout  = d.payouts?.nextPayout;
+
+  if (nextPayout) {
+    const nextEl = document.getElementById('stripe-next-payout');
+    if (nextEl) nextEl.style.display = 'block';
+    setText('stripe-next-payout-amt',  formatMoney(nextPayout.amount));
+    const arrDate = nextPayout.arrival_date
+      ? new Date(nextPayout.arrival_date * 1000).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' })
+      : '—';
+    setText('stripe-next-payout-date', `Arrives ${arrDate}`);
+    const statusColor = nextPayout.status === 'in_transit' ? 'var(--green)' : 'var(--amber)';
+    document.getElementById('stripe-next-payout-status').innerHTML =
+      `<span style="color:${statusColor};font-size:10px;font-weight:600;text-transform:uppercase;">${nextPayout.status.replace('_',' ')}</span>`;
+  }
+
+  const ptbody = document.getElementById('stripePayoutsTable');
+  if (ptbody) {
+    if (!payoutsList.length) {
+      ptbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">No payouts in this period</td></tr>';
+    } else {
+      const statusStyle = {
+        paid:       'color:var(--green);',
+        in_transit: 'color:var(--plum);',
+        pending:    'color:var(--amber);',
+        failed:     'color:var(--red);',
+        canceled:   'color:var(--text-muted);',
+      };
+      ptbody.innerHTML = payoutsList.map(p => {
+        const arrDate = p.arrival_date
+          ? new Date(p.arrival_date * 1000).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+          : '—';
+        const st    = p.status || 'unknown';
+        const stCss = statusStyle[st] || 'color:var(--text-muted);';
+        const method = p.method === 'instant' ? '<span class="badge badge-plum">Instant</span>' : '<span class="badge badge-amber">Standard</span>';
+        return `<tr>
+          <td style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--green);">${formatMoney(p.amount)}</td>
+          <td style="color:var(--text);">${arrDate}</td>
+          <td>${method}</td>
+          <td style="${stCss}font-size:10px;font-weight:600;text-transform:uppercase;">${st.replace('_',' ')}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
 
   // Daily chart
   if (charts.stripeDaily) charts.stripeDaily.destroy();
@@ -1410,14 +1546,14 @@ function renderStripeData(d) {
       type: 'bar',
       data: {
         labels: sorted.map(([d]) => d.slice(5)),
-        datasets: [{ label: 'Transactions', data: sorted.map(([,v]) => v), backgroundColor: 'rgba(126,220,176,0.65)', borderRadius: 3 }]
+        datasets: [{ label: 'Transactions', data: sorted.map(([,v]) => v), backgroundColor: 'rgba(124,92,191,0.5)', borderColor: 'rgba(124,92,191,0.8)', borderWidth: 1, borderRadius: 3 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { ticks: { color: '#5e5470', font: { size: 9 }, maxRotation: 45 } },
-          y: { ticks: { color: '#5e5470' }, beginAtZero: true, precision: 0 }
+          x: { ticks: { color: '#8a7e98', font: { size: 9 }, maxRotation: 45 } },
+          y: { ticks: { color: '#8a7e98' }, beginAtZero: true, precision: 0 }
         }
       }
     });
@@ -1429,22 +1565,22 @@ function renderStripeData(d) {
     if (!d.recentCharges || d.recentCharges.length === 0) {
       tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">No transactions found</td></tr>';
     } else {
-      tbody.innerHTML = d.recentCharges.map(c => {
-        const date   = c.created ? new Date(c.created * 1000).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '—';
-        const amount = formatMoney(c.amount);
+      tbody.innerHTML = d.recentCharges.map(ch => {
+        const date   = ch.created ? new Date(ch.created * 1000).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '—';
+        const amount = formatMoney(ch.amount);
         return `<tr>
-          <td style="font-weight:500;">${c.customer || 'Unknown'}</td>
+          <td style="font-weight:500;">${ch.customer || 'Unknown'}</td>
           <td style="color:var(--green);">${amount}</td>
           <td style="color:var(--text-muted);">${date}</td>
-          <td><span style="color:var(--green);font-size:10px;">✓ ${c.status}</span></td>
+          <td><span style="color:var(--green);font-size:10px;font-weight:600;">✓ Succeeded</span></td>
         </tr>`;
       }).join('');
     }
   }
 
-  // Update overview revenue card if it exists
+  // Update overview revenue card
   setText('ov-revenue',     formatMoney(gross));
-  setText('ov-revenue-sub', `Net: ${formatMoney(net)} · ${refCount} refunds`);
+  setText('ov-revenue-sub', `Net: ${formatMoney(trueNet)} · ${refCount} refund${refCount !== 1 ? 's' : ''}`);
 }
 
 // ── LOAD ALL ──
