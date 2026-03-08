@@ -1076,19 +1076,19 @@ header {
       <div class="card">
         <div class="card-title">Bank Deposits <span class="source-badge source-live">Stripe Payouts</span></div>
 
-        <!-- Pending / In Transit summary -->
-        <div id="stripe-pending-banner" style="display:none;margin-bottom:14px;border-radius:8px;overflow:hidden;border:1px solid var(--lavender);">
+        <!-- Next expected deposit projection -->
+        <div id="stripe-next-deposit" style="margin-bottom:14px;border-radius:8px;overflow:hidden;border:1px solid var(--lavender);">
           <div style="background:linear-gradient(135deg,#7c5cbf,#9b7fd4);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
             <div>
-              <div style="font-size:10px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Coming to Your Bank</div>
-              <div style="font-family:'Cormorant Garamond',serif;font-size:32px;color:white;font-weight:300;line-height:1;" id="stripe-pending-total">—</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Next Expected Deposit</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:32px;color:white;font-weight:300;line-height:1;" id="stripe-next-amount">—</div>
             </div>
             <div style="text-align:right;">
-              <div style="font-size:10px;color:rgba(255,255,255,0.65);margin-bottom:3px;" id="stripe-pending-count">— payouts</div>
-              <div style="font-size:10px;color:rgba(255,255,255,0.65);">Not yet deposited</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.85);margin-bottom:3px;" id="stripe-next-date">Calculating...</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.55);">Based on recent charges</div>
             </div>
           </div>
-          <div id="stripe-pending-rows" style="background:var(--surface2);"></div>
+          <div id="stripe-next-rows" style="background:var(--surface2);"></div>
         </div>
 
         <!-- Already deposited -->
@@ -1874,42 +1874,47 @@ function renderStripeData(d) {
   setText('stripe-true-net',         formatMoney(trueNet));
   setText('stripe-keep-rate',        keepRate !== '—' ? `${keepRate}%` : '—');
 
-  // Payouts — use pre-split lists from worker (upcoming is always fetched regardless of date range)
-  const pendingPayouts  = d.payouts?.upcoming || [];
+  // Payouts — all paid, sorted newest arrival first
   const paidPayoutsList = (d.payouts?.list || [])
-    .filter(p => p.status === 'paid')
+    .filter(p => p.status === 'paid' && p.amount > 0)
     .sort((a, b) => b.arrival_date - a.arrival_date);
 
-  const pendingTotal = d.payouts?.upcomingTotal ?? pendingPayouts.reduce((s, p) => s + p.amount, 0);
+  // Project next expected deposit from recent charges not yet in a payout
+  // Stripe batches daily and deposits ~2 business days later
+  // Find charges after the most recent payout arrival_date
+  const mostRecentPayoutArrival = paidPayoutsList[0]?.arrival_date || 0;
+  const recentCharges = d.recentCharges || [];
+  const unpaidCharges = recentCharges.filter(c => c.created > mostRecentPayoutArrival);
+  const unpaidTotal   = unpaidCharges.reduce((s, c) => s + c.amount, 0);
 
-  // Pending banner
-  const pendingBanner = document.getElementById('stripe-pending-banner');
-  if (pendingBanner) {
-    if (pendingPayouts.length > 0) {
-      pendingBanner.style.display = 'block';
-      setText('stripe-pending-total', formatMoney(pendingTotal));
-      setText('stripe-pending-count', `${pendingPayouts.length} payout${pendingPayouts.length !== 1 ? 's' : ''}`);
+  // Next business day from today (skip weekend)
+  const nextBizDay = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 2);
+    while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+    return d;
+  };
 
-      const pendingRows = document.getElementById('stripe-pending-rows');
-      if (pendingRows) {
-        pendingRows.innerHTML = pendingPayouts.map(p => {
-          const arrDate = p.arrival_date
-            ? new Date(p.arrival_date * 1000).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' })
-            : '—';
-          const isTransit = p.status === 'in_transit';
-          const dot   = isTransit
-            ? '<span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;"></span>'
-            : '<span style="width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block;margin-right:6px;animation:livePulse 1.4s ease-in-out infinite;"></span>';
-          const label = isTransit ? 'In transit' : 'Pending';
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-top:1px solid var(--border);">
-            <div style="display:flex;align-items:center;">${dot}<span style="font-size:11px;color:var(--text-muted);">${label} · Arrives ${arrDate}</span></div>
-            <span style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--plum-light);">${formatMoney(p.amount)}</span>
-          </div>`;
-        }).join('');
-      }
-    } else {
-      pendingBanner.style.display = 'none';
+  const nextDepEl    = document.getElementById('stripe-next-amount');
+  const nextDateEl   = document.getElementById('stripe-next-date');
+  const nextRowsEl   = document.getElementById('stripe-next-rows');
+
+  if (unpaidTotal > 0 && nextDepEl) {
+    nextDepEl.textContent  = formatMoney(unpaidTotal);
+    if (nextDateEl) nextDateEl.textContent = nextBizDay().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
+    if (nextRowsEl) {
+      nextRowsEl.innerHTML = unpaidCharges.slice(0, 5).map(c => {
+        const t = new Date(c.created * 1000).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 16px;border-top:1px solid var(--border);">
+          <span style="font-size:11px;color:var(--text-muted);">${c.customer || 'Customer'} · ${t}</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--plum-light);">${formatMoney(c.amount)}</span>
+        </div>`;
+      }).join('') + (unpaidCharges.length > 5 ? `<div style="padding:7px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);">+${unpaidCharges.length - 5} more charges</div>` : '');
     }
+  } else if (nextDepEl) {
+    nextDepEl.textContent  = 'Up to date';
+    if (nextDateEl) nextDateEl.textContent = 'All charges deposited';
+    if (nextRowsEl) nextRowsEl.innerHTML   = '';
   }
 
   // Paid deposits table
