@@ -718,11 +718,21 @@ header {
   <!-- ═══ GHL PIPELINE ═══ -->
   <div class="panel" id="panel-ghl">
 
-    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
+      <div class="kpi accent">
+        <div class="kpi-label">Booked Calls <span class="source-badge source-live">GHL</span></div>
+        <div class="kpi-value" id="ghl-booked">—</div>
+        <div class="kpi-delta" id="ghl-booked-today" style="color:rgba(255,255,255,0.7);">— today</div>
+      </div>
       <div class="kpi">
-        <div class="kpi-label">Total Opportunities <span class="source-badge source-live">GHL</span></div>
-        <div class="kpi-value plum" id="ghl-total">—</div>
-        <div class="kpi-delta delta-neutral">Sales Pipeline (A&B)</div>
+        <div class="kpi-label">Showed Up</div>
+        <div class="kpi-value green" id="ghl-showed">—</div>
+        <div class="kpi-delta delta-neutral" id="ghl-show-rate-sub">GHL show rate</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">No Shows</div>
+        <div class="kpi-value" style="color:var(--rose);" id="ghl-noshow">—</div>
+        <div class="kpi-delta delta-neutral" id="ghl-noshow-pct">—</div>
       </div>
       <div class="kpi">
         <div class="kpi-label">Won <span class="source-badge source-live">GHL</span></div>
@@ -730,18 +740,19 @@ header {
         <div class="kpi-delta delta-neutral" id="ghl-won-value">$—</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">Booked Calls <span class="source-badge source-live">GHL</span></div>
-        <div class="kpi-value" id="ghl-booked">—</div>
-        <div class="kpi-delta delta-neutral" id="ghl-booked-today">— today</div>
-      </div>
-      <div class="kpi">
         <div class="kpi-label">New Contacts <span class="source-badge source-live">GHL</span></div>
-        <div class="kpi-value" id="ghl-contacts">—</div>
+        <div class="kpi-value plum" id="ghl-contacts">—</div>
         <div class="kpi-delta delta-neutral">Last 30 days</div>
       </div>
     </div>
 
-    <div class="grid-2" style="margin-top:20px;">
+    <div style="display:flex;align-items:center;gap:24px;padding:10px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;font-size:11px;color:var(--text-muted);">
+      <span>Total Opportunities: <strong style="color:var(--text);" id="ghl-total">—</strong></span>
+      <span style="color:var(--border);">|</span>
+      <span>Pipeline: <strong style="color:var(--text);">Sales Pipeline (A&B)</strong></span>
+    </div>
+
+    <div class="grid-2" style="margin-top:0;">
 
       <!-- Stage breakdown -->
       <div class="card">
@@ -751,26 +762,48 @@ header {
         </div>
       </div>
 
-      <!-- Stage donut -->
-      <div class="card">
-        <div class="card-title">Stage Distribution</div>
-        <div class="chart-wrap" style="height:280px;">
-          <canvas id="ghlStageChart"></canvas>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <!-- Stage donut -->
+        <div class="card">
+          <div class="card-title">Stage Distribution</div>
+          <div class="chart-wrap" style="height:200px;">
+            <canvas id="ghlStageChart"></canvas>
+          </div>
+        </div>
+        <!-- Call status breakdown -->
+        <div class="card">
+          <div class="card-title">Call Status Breakdown <span class="source-badge source-live">Next 30 Days</span></div>
+          <div id="ghlCallStatus" style="display:flex;flex-direction:column;gap:10px;padding:4px 0;">
+            <div style="color:var(--text-muted);font-size:11px;">Loading...</div>
+          </div>
         </div>
       </div>
 
     </div>
 
-    <!-- Recent appointments -->
-    <div class="card" style="margin-top:14px;">
-      <div class="card-title">Upcoming Booked Calls <span class="source-badge source-live">GHL Live</span></div>
-      <div class="data-table-wrap">
-      <table class="data-table">
-        <thead><tr><th>Name</th><th>Time</th><th>Status</th></tr></thead>
-        <tbody id="ghlApptsTable">
-          <tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
-        </tbody>
-      </table>
+    <!-- Today's calls + upcoming -->
+    <div class="grid-2" style="margin-top:14px;">
+      <div class="card">
+        <div class="card-title">Today's Calls <span id="ghl-today-badge" class="source-badge source-live" style="margin-left:6px;">0 scheduled</span></div>
+        <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Name</th><th>Time</th><th>Status</th></tr></thead>
+          <tbody id="ghlTodayTable">
+            <tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Upcoming Booked Calls <span class="source-badge source-live">GHL Live</span></div>
+        <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Name</th><th>Date / Time</th><th>Status</th></tr></thead>
+          <tbody id="ghlApptsTable">
+            <tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
+          </tbody>
+        </table>
+        </div>
       </div>
     </div>
 
@@ -1356,6 +1389,47 @@ function renderGHLData(d) {
   setText('ghl-booked-today', `${bookedCalls.today} today`);
   setText('ghl-contacts',     newContacts);
 
+  // Show/noshow stats
+  const byStatus   = bookedCalls.byStatus || {};
+  const showed     = byStatus.showed    || 0;
+  const noshow     = byStatus.noshow    || 0;
+  const confirmed  = byStatus.confirmed || 0;
+  const cancelled  = byStatus.cancelled || 0;
+  const showRate   = bookedCalls.showRate;
+  setText('ghl-showed',       showed);
+  setText('ghl-show-rate-sub', showRate !== null ? `${showRate}% show rate` : 'GHL show rate');
+  setText('ghl-noshow',        noshow);
+  setText('ghl-noshow-pct',    (showed + noshow) > 0 ? `${Math.round(noshow/(showed+noshow)*100)}% no-show rate` : '—');
+
+  // Call status breakdown card
+  const statusEl = document.getElementById('ghlCallStatus');
+  if (statusEl) {
+    const total = bookedCalls.total || 1;
+    const rows = [
+      { label: 'Confirmed (upcoming)', val: confirmed, color: 'var(--plum)' },
+      { label: 'Showed Up',            val: showed,    color: 'var(--green)' },
+      { label: 'No Show',              val: noshow,    color: 'var(--rose)' },
+      { label: 'Cancelled',            val: cancelled, color: 'var(--red)' },
+    ];
+    statusEl.innerHTML = rows.map(r => {
+      const pct = Math.round(r.val / total * 100);
+      return \`<div class="funnel-step">
+        <div class="funnel-label-row">
+          <span class="funnel-name">\${r.label}</span>
+          <div class="funnel-nums">
+            <span class="funnel-count" style="font-size:18px;">\${r.val}</span>
+            <span class="funnel-pct" style="color:\${r.color};">\${pct}%</span>
+          </div>
+        </div>
+        <div class="funnel-bar-bg"><div class="funnel-bar" style="width:\${Math.max(pct,1)}%;background:\${r.color};opacity:0.7;"></div></div>
+      </div>\`;
+    }).join('');
+  }
+
+  // Today badge
+  const todayBadge = document.getElementById('ghl-today-badge');
+  if (todayBadge) todayBadge.textContent = \`\${bookedCalls.today} scheduled\`;
+
   // Stage bars
   const stageOrder = ['New Appointment','Reschedule','No Show','Cancelled','Follow Up','Disqualified','Won','Lost'];
   const stageColors = {
@@ -1414,18 +1488,50 @@ function renderGHLData(d) {
     });
   }
 
-  // Appointments table
+  // Status color helper
+  const statusBadge = st => {
+    const map = {
+      confirmed: 'badge-plum', showed: 'badge-green',
+      noshow: 'badge-red', cancelled: 'badge-amber', cancelled: 'badge-amber'
+    };
+    return `<span class="badge \${map[st] || 'badge-plum'}">\${st || '—'}</span>`;
+  };
+
+  const now2     = new Date();
+  const isToday  = dt => new Date(dt).toDateString() === now2.toDateString();
+
+  const todayRows    = recentAppts.filter(a => isToday(a.startTime));
+  const upcomingRows = recentAppts.filter(a => !isToday(a.startTime));
+
+  // Today table
+  const todayTbody = document.getElementById('ghlTodayTable');
+  if (todayTbody) {
+    if (!todayRows.length) {
+      todayTbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">No calls scheduled today</td></tr>';
+    } else {
+      todayTbody.innerHTML = todayRows.map(a => {
+        const t = a.startTime ? new Date(a.startTime).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }) : '—';
+        return `<tr>
+          <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name.replace(/Relationship Clarity Call/,'').trim()}</td>
+          <td style="color:var(--text-muted);">${t}</td>
+          <td>${statusBadge(a.status)}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  // Upcoming table
   const tbody = document.getElementById('ghlApptsTable');
   if (tbody) {
-    if (!recentAppts || recentAppts.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">No upcoming appointments found</td></tr>';
+    if (!upcomingRows.length) {
+      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">No upcoming appointments</td></tr>';
     } else {
-      tbody.innerHTML = recentAppts.map(a => {
+      tbody.innerHTML = upcomingRows.map(a => {
         const dt = a.startTime ? new Date(a.startTime).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
         return `<tr>
-          <td style="font-weight:500;">${a.name}</td>
+          <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name.replace(/Relationship Clarity Call/,'').trim()}</td>
           <td style="color:var(--text-muted);">${dt}</td>
-          <td style="color:var(--plum-light);">${a.status || '—'}</td>
+          <td>${statusBadge(a.status)}</td>
         </tr>`;
       }).join('');
     }
