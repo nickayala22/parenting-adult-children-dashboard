@@ -1441,8 +1441,8 @@ function renderMetaData(d) {
   setText('ov-cpl',        `CPL: ${cpl > 0 ? formatMoney(cpl) : '—'}`);
 
   // Today vs Yesterday leads
-  const leadsToday     = data.summary?.leadsToday     ?? 0;
-  const leadsYesterday = data.summary?.leadsYesterday ?? 0;
+  const leadsToday     = d.summary?.leadsToday     ?? 0;
+  const leadsYesterday = d.summary?.leadsYesterday ?? 0;
   setText('ov-leads-today',     leadsToday);
   setText('ov-leads-yesterday', leadsYesterday);
   setText('ov-leads-cpl',       cpl > 0 ? `CPL: ${formatMoney(cpl)}` : 'CPL: —');
@@ -1940,8 +1940,8 @@ function renderStripeData(d) {
   setText('ov-revenue-sub', `Net: ${formatMoney(trueNet)} · ${refCount} refund${refCount !== 1 ? 's' : ''}`);
 
   // Today vs Yesterday revenue
-  const revToday     = data.revenue?.today     ?? 0;
-  const revYesterday = data.revenue?.yesterday ?? 0;
+  const revToday     = d.revenue?.today     ?? 0;
+  const revYesterday = d.revenue?.yesterday ?? 0;
   setText('ov-revenue-today',     formatMoney(revToday));
   setText('ov-revenue-yesterday', formatMoney(revYesterday));
   const rdEl = document.getElementById('ov-revenue-delta');
