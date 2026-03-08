@@ -966,20 +966,20 @@ header {
         <div class="card-title">Today's Calls <span id="ghl-today-badge" class="source-badge source-live" style="margin-left:6px;">0 scheduled</span></div>
         <div class="data-table-wrap">
         <table class="data-table">
-          <thead><tr><th>Name</th><th>Time</th><th>Status</th></tr></thead>
+          <thead><tr><th>Name</th><th>Time</th><th>Rep</th><th>Status</th></tr></thead>
           <tbody id="ghlTodayTable">
-            <tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
+            <tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
           </tbody>
         </table>
         </div>
       </div>
       <div class="card">
-        <div class="card-title">Tomorrow's Calls <span id="ghl-tomorrow-badge" class="source-badge source-live" style="margin-left:6px;">0 scheduled</span></div>
+        <div class="card-title">Tomorrow's Calls <span id="ghl-tomorrow-badge" class="source-badge source-live" style="margin-left:6px;">0 booked</span></div>
         <div class="data-table-wrap">
         <table class="data-table">
-          <thead><tr><th>Name</th><th>Time</th><th>Status</th></tr></thead>
+          <thead><tr><th>Name</th><th>Time</th><th>Rep</th><th>Status</th></tr></thead>
           <tbody id="ghlApptsTable">
-            <tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
+            <tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
           </tbody>
         </table>
         </div>
@@ -1570,7 +1570,7 @@ async function fetchGHL() {
   try {
     const controller = new AbortController();
     const timeout    = setTimeout(() => controller.abort(), 12000);
-    const res  = await fetch(`${WORKER_URL}/ghl/summary`, { signal: controller.signal });
+    const res  = await fetch(`${WORKER_URL}/ghl/summary?startTime=${activeRange.startTime}&endTime=${activeRange.endTime}`, { signal: controller.signal });
     clearTimeout(timeout);
     const data = await res.json();
     if (!res.ok || data.error) {
@@ -1591,7 +1591,7 @@ function renderGHLData(d) {
   setText('ghl-total',        pipeline.total);
   setText('ghl-won-count',    won.count);
   setText('ghl-won-value',    formatMoney(won.value));
-  setText('ghl-booked',       bookedCalls.total);
+  setText('ghl-booked',       bookedCalls.inRange ?? bookedCalls.total);
   setText('ghl-booked-today', `${bookedCalls.today} today`);
   setText('ghl-contacts',     newContacts);
 
@@ -1717,13 +1717,15 @@ function renderGHLData(d) {
   const todayTbody = document.getElementById('ghlTodayTable');
   if (todayTbody) {
     if (!todayRows.length) {
-      todayTbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">No calls scheduled today</td></tr>';
+      todayTbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">No calls scheduled today</td></tr>';
     } else {
       todayTbody.innerHTML = todayRows.map(a => {
-        const t = a.startTime ? new Date(a.startTime).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }) : '—';
+        const t   = a.startTime ? new Date(a.startTime).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }) : '—';
+        const rep = a.rep || 'Unassigned';
         return `<tr>
-          <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name.replace(/Relationship Clarity Call/i,'').replace(/SCHOLARSHIP:|CONFIRMED:|FOLLOW UP:|RESCHEDULE:/gi,'').trim().replace(/^:\s*/,'')}</td>
+          <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name.replace(/Relationship Clarity Call/i,'').replace(/SCHOLARSHIP:|CONFIRMED:|FOLLOW UP:|RESCHEDULE:/gi,'').trim().replace(/^:\s*/,'')}</td>
           <td style="color:var(--text-muted);">${t}</td>
+          <td style="color:var(--plum);font-size:12px;white-space:nowrap;">${rep}</td>
           <td>${statusBadge(a.status)}</td>
         </tr>`;
       }).join('');
@@ -1734,13 +1736,15 @@ function renderGHLData(d) {
   const tbody = document.getElementById('ghlApptsTable');
   if (tbody) {
     if (!tomorrowList.length) {
-      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">No calls booked for tomorrow</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">No calls booked for tomorrow</td></tr>';
     } else {
       tbody.innerHTML = tomorrowList.map(a => {
-        const t = a.startTime ? new Date(a.startTime).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }) : '—';
+        const t   = a.startTime ? new Date(a.startTime).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }) : '—';
+        const rep = a.rep || 'Unassigned';
         return `<tr>
-          <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name.replace(/Relationship Clarity Call/i,'').replace(/SCHOLARSHIP:|CONFIRMED:|FOLLOW UP:|RESCHEDULE:/gi,'').trim().replace(/^:\s*/,'')}</td>
+          <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name.replace(/Relationship Clarity Call/i,'').replace(/SCHOLARSHIP:|CONFIRMED:|FOLLOW UP:|RESCHEDULE:/gi,'').trim().replace(/^:\s*/,'')}</td>
           <td style="color:var(--text-muted);">${t}</td>
+          <td style="color:var(--plum);font-size:12px;white-space:nowrap;">${rep}</td>
           <td>${statusBadge(a.status)}</td>
         </tr>`;
       }).join('');
@@ -2100,6 +2104,15 @@ function renderLiveBookings(data) {
   // Store state for next comparison
   _prevTodayCount = count;
   _prevTodayIds   = currentIds;
+
+  // Keep tomorrow badge live — poller has tomorrowAppts too
+  const tmrList   = data.tomorrowAppts || [];
+  const tmrBadge  = document.getElementById('ghl-tomorrow-badge');
+  if (tmrBadge) tmrBadge.textContent = `${tmrList.length} booked`;
+
+  // Also keep today badge live
+  const todayBadgeLive = document.getElementById('ghl-today-badge');
+  if (todayBadgeLive) todayBadgeLive.textContent = `${count} scheduled`;
 }
 
 // ── INIT ──
