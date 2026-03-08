@@ -430,7 +430,7 @@ header {
   <!-- ═══ OVERVIEW ═══ -->
   <div class="panel active" id="panel-overview">
 
-    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr);">
       <div class="kpi">
         <div class="kpi-label">Ad Spend <span class="source-badge source-live">Live</span></div>
         <div class="kpi-value plum" id="ov-spend">—</div>
@@ -455,6 +455,16 @@ header {
         <div class="kpi-label">Gross Revenue <span class="source-badge source-live">Stripe</span></div>
         <div class="kpi-value" id="ov-revenue">—</div>
         <div class="kpi-delta delta-neutral" id="ov-revenue-sub">Loading...</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Booked Calls <span class="source-badge source-live">GHL</span></div>
+        <div class="kpi-value plum" id="ov-booked">—</div>
+        <div class="kpi-delta delta-neutral" id="ov-booked-sub">Next 30 days</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Attendee → Booked <span class="source-badge source-live">WJ+GHL</span></div>
+        <div class="kpi-value" id="ov-conversion" style="color:var(--plum-light);">—</div>
+        <div class="kpi-delta delta-neutral" id="ov-conversion-sub">Attended → call booked</div>
       </div>
     </div>
 
@@ -922,14 +932,15 @@ const META_ACCT   = '1418314416615641';
 const WJ_LIVE_ID  = '25';
 const WJ_EG_ID    = '55';
 
-Chart.defaults.font  = { family: "'DM Mono', monospace", size: 10 };
-Chart.defaults.color = '#5e5470';
+Chart.defaults.font  = { family: "'Inter', sans-serif", size: 10 };
+Chart.defaults.color = '#8a7e98';
 
 let charts      = {};
 let activeRange = { startTime: new Date(Date.now() - 30*86400000).getTime(), endTime: Date.now() };
 let lastMeta    = null;
 let lastWJ      = null;
 let lastWJEg    = null;
+let lastGHL     = null;
 
 // ── STATUS ──
 function setStatus(state) {
@@ -1100,6 +1111,8 @@ function renderWebinarSide(prefix, d) {
 
 // ── RENDER COMBINED TOTALS + OVERVIEW ──
 function renderWebinarCombined(liveData, egData) {
+  lastWJ   = liveData;
+  lastWJEg = egData;
   const ls = liveData?.stats  || { registrants:0, attended:0, noShowed:0 };
   const es = egData?.stats    || { registrants:0, attended:0, noShowed:0 };
 
@@ -1333,6 +1346,7 @@ async function fetchGHL() {
 
 // ── RENDER GHL ──
 function renderGHLData(d) {
+  lastGHL = d;
   const { pipeline, stages, won, bookedCalls, recentAppts, newContacts } = d;
 
   setText('ghl-total',        pipeline.total);
@@ -1415,6 +1429,45 @@ function renderGHLData(d) {
         </tr>`;
       }).join('');
     }
+  }
+
+  // Overview: booked calls
+  setText('ov-booked',     bookedCalls.total);
+  setText('ov-booked-sub', `${bookedCalls.today} today`);
+
+  calcConversionRate();
+}
+
+// ── CONVERSION RATE: Webinar Attended → Booked Call ──
+function calcConversionRate() {
+  const ls = lastWJ?.stats    || {};
+  const es = lastWJEg?.stats  || {};
+  const ghl = lastGHL;
+
+  const totalAttended = (ls.attended || 0) + (es.attended || 0);
+  // Use total pipeline opps as proxy for booked calls if calendar API is still pending
+  const bookedTotal   = ghl?.bookedCalls?.total > 0
+    ? ghl.bookedCalls.total
+    : (ghl?.stages?.['New Appointment']?.count || 0);
+
+  if (totalAttended === 0 || bookedTotal === 0) {
+    setText('ov-conversion',     '—');
+    setText('ov-conversion-sub', 'Awaiting data');
+    return;
+  }
+
+  const rate    = Math.round(bookedTotal / totalAttended * 100);
+  const display = rate + '%';
+
+  setText('ov-conversion', display);
+  setText('ov-conversion-sub', `${bookedTotal} booked of ${totalAttended} attended`);
+
+  // Color code: green >20%, amber 10-20%, red <10%
+  const el = document.getElementById('ov-conversion');
+  if (el) {
+    if      (rate >= 20) el.style.color = 'var(--green)';
+    else if (rate >= 10) el.style.color = 'var(--amber)';
+    else                 el.style.color = 'var(--rose)';
   }
 }
 
