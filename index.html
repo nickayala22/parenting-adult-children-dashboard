@@ -1611,22 +1611,22 @@ function renderGHLData(d) {
     ];
     statusEl.innerHTML = rows.map(r => {
       const pct = Math.round(r.val / total * 100);
-      return \`<div class="funnel-step">
+      return `<div class="funnel-step">
         <div class="funnel-label-row">
-          <span class="funnel-name">\${r.label}</span>
+          <span class="funnel-name">${r.label}</span>
           <div class="funnel-nums">
-            <span class="funnel-count" style="font-size:18px;">\${r.val}</span>
-            <span class="funnel-pct" style="color:\${r.color};">\${pct}%</span>
+            <span class="funnel-count" style="font-size:18px;">${r.val}</span>
+            <span class="funnel-pct" style="color:${r.color};">${pct}%</span>
           </div>
         </div>
-        <div class="funnel-bar-bg"><div class="funnel-bar" style="width:\${Math.max(pct,1)}%;background:\${r.color};opacity:0.7;"></div></div>
-      </div>\`;
+        <div class="funnel-bar-bg"><div class="funnel-bar" style="width:${Math.max(pct,1)}%;background:${r.color};opacity:0.7;"></div></div>
+      </div>`;
     }).join('');
   }
 
   // Today badge
   const todayBadge = document.getElementById('ghl-today-badge');
-  if (todayBadge) todayBadge.textContent = \`\${bookedCalls.today} scheduled\`;
+  if (todayBadge) todayBadge.textContent = `${bookedCalls.today} scheduled`;
 
   // Stage bars
   const stageOrder = ['New Appointment','Reschedule','No Show','Cancelled','Follow Up','Disqualified','Won','Lost'];
@@ -1692,7 +1692,7 @@ function renderGHLData(d) {
       confirmed: 'badge-plum', showed: 'badge-green',
       noshow: 'badge-red', cancelled: 'badge-amber', cancelled: 'badge-amber'
     };
-    return `<span class="badge \${map[st] || 'badge-plum'}">\${st || '—'}</span>`;
+    return `<span class="badge ${map[st] || 'badge-plum'}">${st || '—'}</span>`;
   };
 
   const now2     = new Date();
