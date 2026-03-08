@@ -974,10 +974,10 @@ header {
         </div>
       </div>
       <div class="card">
-        <div class="card-title">Upcoming Booked Calls <span class="source-badge source-live">GHL Live</span></div>
+        <div class="card-title">Tomorrow's Calls <span id="ghl-tomorrow-badge" class="source-badge source-live" style="margin-left:6px;">0 scheduled</span></div>
         <div class="data-table-wrap">
         <table class="data-table">
-          <thead><tr><th>Name</th><th>Date / Time</th><th>Status</th></tr></thead>
+          <thead><tr><th>Name</th><th>Time</th><th>Status</th></tr></thead>
           <tbody id="ghlApptsTable">
             <tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
           </tbody>
@@ -1586,7 +1586,7 @@ async function fetchGHL() {
 // ── RENDER GHL ──
 function renderGHLData(d) {
   lastGHL = d;
-  const { pipeline, stages, won, bookedCalls, recentAppts, newContacts } = d;
+  const { pipeline, stages, won, bookedCalls, recentAppts, tomorrowAppts, newContacts } = d;
 
   setText('ghl-total',        pipeline.total);
   setText('ghl-won-count',    won.count);
@@ -1632,11 +1632,7 @@ function renderGHLData(d) {
     }).join('');
   }
 
-  // Today badge
-  const todayBadge = document.getElementById('ghl-today-badge');
-  if (todayBadge) todayBadge.textContent = `${bookedCalls.today} scheduled`;
-
-  // Stage bars
+  // Overview: booked calls
   const stageOrder = ['New Appointment','Reschedule','No Show','Cancelled','Follow Up','Disqualified','Won','Lost'];
   const stageColors = {
     'New Appointment': 'var(--plum)',
@@ -1703,11 +1699,19 @@ function renderGHLData(d) {
     return `<span class="badge ${map[st] || 'badge-plum'}">${st || '—'}</span>`;
   };
 
-  const now2     = new Date();
-  const isToday  = dt => new Date(dt).toDateString() === now2.toDateString();
+  const now2      = new Date();
+  const isToday   = dt => new Date(dt).toDateString() === now2.toDateString();
 
-  const todayRows    = recentAppts.filter(a => isToday(a.startTime));
-  const upcomingRows = recentAppts.filter(a => !isToday(a.startTime));
+  const todayRows = recentAppts.filter(a => isToday(a.startTime));
+
+  // Today badge
+  const todayBadge2 = document.getElementById('ghl-today-badge');
+  if (todayBadge2) todayBadge2.textContent = `${bookedCalls.today} scheduled`;
+
+  // Tomorrow badge
+  const tomorrowBadge = document.getElementById('ghl-tomorrow-badge');
+  const tomorrowList  = tomorrowAppts || [];
+  if (tomorrowBadge) tomorrowBadge.textContent = `${tomorrowList.length} scheduled`;
 
   // Today table
   const todayTbody = document.getElementById('ghlTodayTable');
@@ -1718,7 +1722,7 @@ function renderGHLData(d) {
       todayTbody.innerHTML = todayRows.map(a => {
         const t = a.startTime ? new Date(a.startTime).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }) : '—';
         return `<tr>
-          <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name.replace(/Relationship Clarity Call/,'').trim()}</td>
+          <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name.replace(/Relationship Clarity Call/i,'').replace(/SCHOLARSHIP:|CONFIRMED:|FOLLOW UP:|RESCHEDULE:/gi,'').trim().replace(/^:\s*/,'')}</td>
           <td style="color:var(--text-muted);">${t}</td>
           <td>${statusBadge(a.status)}</td>
         </tr>`;
@@ -1726,17 +1730,17 @@ function renderGHLData(d) {
     }
   }
 
-  // Upcoming table
+  // Tomorrow table
   const tbody = document.getElementById('ghlApptsTable');
   if (tbody) {
-    if (!upcomingRows.length) {
-      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">No upcoming appointments</td></tr>';
+    if (!tomorrowList.length) {
+      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);padding:16px 0;">No calls booked for tomorrow</td></tr>';
     } else {
-      tbody.innerHTML = upcomingRows.map(a => {
-        const dt = a.startTime ? new Date(a.startTime).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+      tbody.innerHTML = tomorrowList.map(a => {
+        const t = a.startTime ? new Date(a.startTime).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }) : '—';
         return `<tr>
-          <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name.replace(/Relationship Clarity Call/,'').trim()}</td>
-          <td style="color:var(--text-muted);">${dt}</td>
+          <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name.replace(/Relationship Clarity Call/i,'').replace(/SCHOLARSHIP:|CONFIRMED:|FOLLOW UP:|RESCHEDULE:/gi,'').trim().replace(/^:\s*/,'')}</td>
+          <td style="color:var(--text-muted);">${t}</td>
           <td>${statusBadge(a.status)}</td>
         </tr>`;
       }).join('');
