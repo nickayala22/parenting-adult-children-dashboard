@@ -1470,14 +1470,16 @@ function renderMetaData(d) {
   setText('ov-cpl-sub',    cpl > 0 ? `${leads} leads · ${formatMoney(spend)} spend` : 'Awaiting Meta data');
   setText('ov-ctr-card',   `${typeof ctr === 'number' ? ctr.toFixed(2) : ctr}%`);
 
-  // Cost per registrant — combined live + evergreen
+  // Cost per registrant — WJ registrants are all-time, label accordingly
   if (lastWJ || lastWJEg) {
     const liveReg = lastWJ?.stats?.registrants   || 0;
     const egReg   = lastWJEg?.stats?.registrants || 0;
     const reg     = liveReg + egReg;
+    // NOTE: spend is date-range scoped, reg is all-time — this ratio only makes sense
+    // if the date range covers the full campaign life. Label it clearly.
     const cpr = reg > 0 ? spend / reg : 0;
     setText('ov-cpr-card', cpr > 0 ? formatMoney(cpr) : '—');
-    setText('ov-cpr-sub',  cpr > 0 ? `${formatMoney(spend)} spend · ${reg} registrants` : 'Awaiting data');
+    setText('ov-cpr-sub',  reg > 0 ? `${formatMoney(spend)} spend (selected period) · ${reg} registrants all-time` : 'Awaiting data');
 
     // Update overview funnel lead count now that we have it
     const el = document.getElementById('overviewFunnel');
@@ -1760,29 +1762,37 @@ function renderGHLData(d) {
 
 // ── CONVERSION RATE: Webinar Attended → Booked Call ──
 function calcConversionRate() {
-  const ls = lastWJ?.stats    || {};
-  const es = lastWJEg?.stats  || {};
+  const ls  = lastWJ?.stats  || {};
+  const es  = lastWJEg?.stats || {};
   const ghl = lastGHL;
 
+  // WJ attended is always all-time — no date filtering available from WJ API
   const totalAttended = (ls.attended || 0) + (es.attended || 0);
-  // Use total pipeline opps as proxy for booked calls if calendar API is still pending
-  const bookedTotal   = ghl?.bookedCalls?.total > 0
-    ? ghl.bookedCalls.total
-    : (ghl?.stages?.['New Appointment']?.count || 0);
 
-  if (totalAttended === 0 || bookedTotal === 0) {
+  // Use pipeline Won + New Appointment as all-time booked proxy to match WJ's all-time scope
+  // inRange is date-scoped and shouldn't be mixed with all-time WJ attended
+  const stages     = ghl?.stages || {};
+  const wonCount   = stages['Won']?.count              || 0;
+  const newApptCount = stages['New Appointment']?.count || 0;
+  const followUpCount = stages['Follow Up']?.count     || 0;
+  // All-time booked = everything in pipeline that was ever booked (all stages)
+  const allTimePipelineTotal = ghl?.pipeline?.total || 0;
+
+  if (totalAttended === 0) {
     setText('ov-conversion',     '—');
-    setText('ov-conversion-sub', 'Awaiting data');
+    setText('ov-conversion-sub', 'No webinar attendance data');
+    return;
+  }
+  if (allTimePipelineTotal === 0) {
+    setText('ov-conversion',     '—');
+    setText('ov-conversion-sub', 'Awaiting pipeline data');
     return;
   }
 
-  const rate    = Math.round(bookedTotal / totalAttended * 100);
-  const display = rate + '%';
+  const rate    = Math.round(allTimePipelineTotal / totalAttended * 100);
+  setText('ov-conversion', rate + '%');
+  setText('ov-conversion-sub', `${allTimePipelineTotal} pipeline / ${totalAttended} attended (all-time)`);
 
-  setText('ov-conversion', display);
-  setText('ov-conversion-sub', `${bookedTotal} booked of ${totalAttended} attended`);
-
-  // Color code: green >20%, amber 10-20%, red <10%
   const el = document.getElementById('ov-conversion');
   if (el) {
     if      (rate >= 20) el.style.color = 'var(--green)';
