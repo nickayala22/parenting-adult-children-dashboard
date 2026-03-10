@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
 <title>PACT — Command Center</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -41,6 +42,35 @@ body {
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
+  color-scheme: light;
+}
+
+/* Force light mode — override any OS/browser dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:           #f4f1f9;
+    --surface:      #ffffff;
+    --surface2:     #ede8f5;
+    --border:       #d9d0ea;
+    --border-bright:#b8a8d8;
+    --plum:         #7c5cbf;
+    --plum-light:   #9b7fd4;
+    --plum-dim:     rgba(124, 92, 191, 0.10);
+    --plum-soft:    #e8e0f5;
+    --lavender:     #c9b8e8;
+    --rose:         #c97a94;
+    --rose-dim:     rgba(201, 122, 148, 0.1);
+    --text:         #2d2438;
+    --text-muted:   #8a7e98;
+    --text-mid:     #5e5070;
+    --green:        #3a9e72;
+    --green-dim:    rgba(58, 158, 114, 0.1);
+    --red:          #c0534a;
+    --red-dim:      rgba(192, 83, 74, 0.1);
+    --amber:        #c08030;
+    --amber-dim:    rgba(192, 128, 48, 0.1);
+  }
+  html, body { background: #f4f1f9 !important; color: #2d2438 !important; }
 }
 
 /* Purple top accent bar */
@@ -510,6 +540,44 @@ header {
   .kpi-grid { grid-template-columns: 1fr !important; }
   .tab { font-size: 9.5px; padding: 9px 11px; }
   .wrap { padding: 0 12px 50px; }
+  #dowGrid { grid-template-columns: repeat(4,1fr) !important; }
+}
+@media (max-width: 400px) {
+  #dowGrid { grid-template-columns: repeat(2,1fr) !important; }
+}
+.dow-card {
+  background: var(--surface2);
+  border-radius: 10px;
+  padding: 12px 10px;
+  text-align: center;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+.dow-card.today {
+  border-color: var(--plum);
+  background: var(--plum-soft);
+}
+.dow-card .dow-name {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.dow-card.today .dow-name { color: var(--plum); }
+.dow-card .dow-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.dow-card.today .dow-value { color: var(--plum); }
+.dow-card .dow-sub {
+  font-size: 9.5px;
+  color: var(--text-muted);
 }
 </style>
 </head>
@@ -996,6 +1064,67 @@ header {
   <!-- ═══ STRIPE REVENUE ═══ -->
   <div class="panel" id="panel-stripe">
 
+    <!-- Combined Revenue Row -->
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
+      <div class="kpi accent" style="grid-column:1/2;">
+        <div class="kpi-label">Total Revenue <span class="source-badge" style="background:rgba(255,255,255,0.15);color:white;">Stripe + Whop</span></div>
+        <div class="kpi-value" id="combined-revenue">—</div>
+        <div class="kpi-delta" style="color:rgba(255,255,255,0.7);" id="combined-revenue-sub">all sources</div>
+      </div>
+      <div class="kpi" style="border:2px solid var(--lavender);">
+        <div class="kpi-label">Whop Total <span class="source-badge source-live">Whop</span></div>
+        <div class="kpi-value plum" id="whop-combined-total">—</div>
+        <div class="kpi-delta delta-neutral" id="whop-combined-sub">gross · selected period</div>
+      </div>
+      <div class="kpi" style="border:2px solid var(--lavender);">
+        <div class="kpi-label">Stripe Total <span class="source-badge source-live">Stripe</span></div>
+        <div class="kpi-value plum" id="stripe-combined-total">—</div>
+        <div class="kpi-delta delta-neutral" id="stripe-combined-sub">gross · selected period</div>
+      </div>
+    </div>
+
+    <!-- Whop detail row -->
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px;">
+      <div class="kpi">
+        <div class="kpi-label">Whop Net Revenue</div>
+        <div class="kpi-value green" id="whop-net">—</div>
+        <div class="kpi-delta delta-neutral" id="whop-net-sub">after refunds</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Whop Active Members</div>
+        <div class="kpi-value" id="whop-members">—</div>
+        <div class="kpi-delta delta-neutral">currently active</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Whop Refunds</div>
+        <div class="kpi-value" style="color:var(--rose);" id="whop-refunds">—</div>
+        <div class="kpi-delta delta-neutral" id="whop-refunds-sub">selected period</div>
+      </div>
+    </div>
+
+    <!-- Whop recent payments -->
+    <div class="grid-2" style="margin-bottom:18px;">
+      <div class="card">
+        <div class="card-title">Whop Recent Payments <span class="source-badge source-live">Whop</span></div>
+        <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Customer</th><th>Plan</th><th>Amount</th><th>Date</th></tr></thead>
+          <tbody id="whopPaymentsTable">
+            <tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Whop Daily Revenue <span class="source-badge source-live">Whop</span></div>
+        <div class="chart-wrap" style="height:180px;">
+          <canvas id="whopDailyChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <hr style="border:none;border-top:1px solid var(--border);margin:0 0 18px 0;">
+
     <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
       <div class="kpi accent">
         <div class="kpi-label">Gross Revenue <span class="source-badge source-live">Stripe</span></div>
@@ -1146,6 +1275,17 @@ header {
       </div>
     </div>
 
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title">Average Revenue by Day of Week <span class="source-badge source-live">Stripe + Whop · Last 90 Days</span></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Based on all historical data in the selected window. Today's day is highlighted.</div>
+      <div id="dowGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;">
+        <div class="dow-loading" style="grid-column:1/-1;color:var(--text-muted);padding:20px 0;text-align:center;">Loading...</div>
+      </div>
+      <div style="margin-top:18px;">
+        <canvas id="dowChart" height="120"></canvas>
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -1166,6 +1306,7 @@ let lastMeta    = null;
 let lastWJ      = null;
 let lastWJEg    = null;
 let lastGHL     = null;
+let lastStripe  = null;
 
 // ── STATUS ──
 function setStatus(state) {
@@ -1819,7 +1960,9 @@ async function fetchStripe() {
       setText('stripe-revenue-sub', data.error || 'Check worker');
       return;
     }
+    lastStripe = data;
     renderStripeData(data);
+    updateCombinedRevenue();
   } catch(err) {
     setText('stripe-revenue', err.name === 'AbortError' ? 'Timeout' : 'Error');
   }
@@ -2016,6 +2159,192 @@ function loadAllData() {
   fetchMeta();
   fetchGHL();
   fetchStripe();
+  fetchWhop();
+}
+
+// ── FETCH WHOP ──
+let lastWhop = null;
+async function fetchWhop() {
+  try {
+    const controller = new AbortController();
+    const timeout    = setTimeout(() => controller.abort(), 12000);
+    const res  = await fetch(`${WORKER_URL}/whop/summary?startTime=${activeRange.startTime}&endTime=${activeRange.endTime}`, { signal: controller.signal });
+    clearTimeout(timeout);
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      setText('whop-revenue', 'Error');
+      console.error('Whop error:', data.error);
+      return;
+    }
+    lastWhop = data;
+    renderWhopData(data);
+  } catch(err) {
+    setText('whop-revenue', err.name === 'AbortError' ? 'Timeout' : 'Error');
+  }
+}
+
+function renderWhopData(d) {
+  const rev     = d.revenue || {};
+  const refunds = d.refunds || {};
+
+  // Individual Whop boxes
+  setText('whop-combined-total', formatMoney(rev.total || 0));
+  setText('whop-combined-sub',   `${rev.count || 0} transactions`);
+  setText('whop-net',            formatMoney(rev.net   || 0));
+  setText('whop-net-sub',        refunds.count > 0 ? `${refunds.count} refund${refunds.count !== 1 ? 's' : ''}` : 'no refunds');
+  setText('whop-members',        d.memberships?.active ?? '—');
+  setText('whop-refunds',        formatMoney(refunds.total || 0));
+  setText('whop-refunds-sub',    `${refunds.count || 0} refunds`);
+
+  // Combined total — add to whatever Stripe has
+  updateCombinedRevenue();
+
+  // Daily chart
+  if (charts.whopDaily) charts.whopDaily.destroy();
+  const wCtx = document.getElementById('whopDailyChart');
+  if (wCtx && d.dailyRevenue) {
+    const sorted = Object.entries(d.dailyRevenue).sort((a,b) => a[0].localeCompare(b[0]));
+    charts.whopDaily = new Chart(wCtx, {
+      type: 'bar',
+      data: {
+        labels: sorted.map(([d]) => d.slice(5)),
+        datasets: [{ label: 'Revenue', data: sorted.map(([,v]) => v),
+          backgroundColor: 'rgba(124,92,191,0.5)', borderColor: '#7c5cbf', borderWidth: 1, borderRadius: 3 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#5e5470', maxTicksLimit: 10 } },
+          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { callback: v => '$' + v, color: '#5e5470' } }
+        }
+      }
+    });
+  }
+
+  // Recent payments table
+  const tbody = document.getElementById('whopPaymentsTable');
+  if (tbody) {
+    const payments = d.recentPayments || [];
+    if (!payments.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">No payments in this period</td></tr>';
+    } else {
+      tbody.innerHTML = payments.map(p => {
+        const dt = p.created ? new Date(p.created * 1000).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '—';
+        const statusColor = p.status === 'paid' ? 'var(--green)' : p.status === 'refunded' ? 'var(--rose)' : 'var(--text-muted)';
+        return `<tr>
+          <td style="font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.customer}</td>
+          <td style="color:var(--text-muted);font-size:11px;">${p.plan || '—'}</td>
+          <td style="font-family:'Cormorant Garamond',serif;font-size:18px;color:${statusColor};">${formatMoney(p.amount)}</td>
+          <td style="color:var(--text-muted);">${dt}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+}
+
+function updateCombinedRevenue() {
+  const stripeTotal = lastStripe?.revenue?.total || 0;
+  const whopTotal   = lastWhop?.revenue?.total   || 0;
+  const combined    = stripeTotal + whopTotal;
+  setText('combined-revenue',      formatMoney(combined));
+  setText('combined-revenue-sub',  `Whop ${formatMoney(whopTotal)} + Stripe ${formatMoney(stripeTotal)}`);
+  setText('stripe-combined-total', formatMoney(stripeTotal));
+  setText('stripe-combined-sub',   `${lastStripe?.revenue?.count || 0} transactions`);
+
+  // Rebuild DOW averages whenever either source updates
+  if (lastStripe || lastWhop) renderDOWAverages();
+}
+
+// ── DAY-OF-WEEK AVERAGES ──
+function renderDOWAverages() {
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const today = new Date().getDay(); // 0=Sun
+
+  // Merge Stripe + Whop daily data by date string
+  const combined = {};
+  const addSource = (daily) => {
+    if (!daily || typeof daily !== 'object') return;
+    Object.entries(daily).forEach(([date, val]) => {
+      combined[date] = (combined[date] || 0) + (val || 0);
+    });
+  };
+  addSource(lastStripe?.dailySales);   // Stripe uses dailySales
+  addSource(lastStripe?.dailyRevenue); // fallback
+  addSource(lastWhop?.dailyRevenue);
+
+  // Bucket totals and counts by day-of-week
+  const buckets = Array.from({length:7}, () => ({ total: 0, count: 0 }));
+  Object.entries(combined).forEach(([date, val]) => {
+    if (!val && val !== 0) return;
+    const d = new Date(date + 'T12:00:00'); // noon to avoid TZ edge
+    if (isNaN(d)) return;
+    const dow = d.getDay();
+    buckets[dow].total += val;
+    if (val > 0) buckets[dow].count++; // only count days that had revenue
+  });
+
+  const avgs = buckets.map(b => b.count > 0 ? b.total / b.count : 0);
+  const maxAvg = Math.max(...avgs, 1);
+
+  // Render cards
+  const grid = document.getElementById('dowGrid');
+  if (!grid) return;
+  grid.innerHTML = DAYS.map((name, i) => {
+    const isToday = i === today;
+    const avg = avgs[i];
+    const weeks = buckets[i].count;
+    return `<div class="dow-card${isToday ? ' today' : ''}">
+      <div class="dow-name">${name}${isToday ? ' ★' : ''}</div>
+      <div class="dow-value">${avg >= 1 ? '$' + Math.round(avg).toLocaleString() : '—'}</div>
+      <div class="dow-sub">${weeks > 0 ? weeks + ' week' + (weeks !== 1 ? 's' : '') : 'no data'}</div>
+    </div>`;
+  }).join('');
+
+  // Bar chart
+  if (charts.dow) charts.dow.destroy();
+  const ctx = document.getElementById('dowChart');
+  if (!ctx) return;
+  charts.dow = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: DAYS.map((d, i) => i === today ? d + ' ★' : d),
+      datasets: [{
+        label: 'Avg Revenue',
+        data: avgs,
+        backgroundColor: DAYS.map((_, i) =>
+          i === today ? '#7c5cbf' : 'rgba(124,92,191,0.35)'
+        ),
+        borderColor: DAYS.map((_, i) =>
+          i === today ? '#7c5cbf' : 'rgba(124,92,191,0.6)'
+        ),
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ' $' + Math.round(ctx.parsed.y).toLocaleString() + ' avg',
+            afterLabel: ctx => {
+              const weeks = buckets[ctx.dataIndex].count;
+              return weeks + ' data point' + (weeks !== 1 ? 's' : '');
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#8a7e98' } },
+        y: {
+          grid: { color: 'rgba(0,0,0,0.04)' },
+          ticks: { callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(1) + 'k' : v), color: '#8a7e98' }
+        }
+      }
+    }
+  });
 }
 
 // ── LIVE BOOKINGS TODAY (60s fast poll) ──
