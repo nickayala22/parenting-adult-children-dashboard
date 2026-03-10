@@ -629,7 +629,12 @@ header {
   <!-- ═══ OVERVIEW ═══ -->
   <div class="panel active" id="panel-overview">
 
-    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
+      <div class="kpi accent">
+        <div class="kpi-label">Total Revenue <span class="source-badge" style="background:rgba(255,255,255,0.15);color:white;">Stripe + Whop</span></div>
+        <div class="kpi-value" id="ov-total-revenue">—</div>
+        <div class="kpi-delta" style="color:rgba(255,255,255,0.7);" id="ov-total-revenue-sub">selected period</div>
+      </div>
       <div class="kpi">
         <div class="kpi-label">Ad Spend <span class="source-badge source-live">Meta</span></div>
         <div class="kpi-value plum" id="ov-spend">—</div>
@@ -640,7 +645,7 @@ header {
         <div class="kpi-value" id="ov-registrants">—</div>
         <div class="kpi-delta delta-neutral" id="ov-reg-sub">Loading...</div>
       </div>
-      <div class="kpi accent">
+      <div class="kpi">
         <div class="kpi-label">Show Rate <span class="source-badge source-live">WJ</span></div>
         <div class="kpi-value green" id="ov-showrate">—</div>
         <div class="kpi-delta delta-neutral" id="ov-showrate-sub">—</div>
@@ -672,7 +677,7 @@ header {
       </div>
 
       <div class="kpi compare-kpi accent">
-        <div class="kpi-label">Revenue Today vs Yesterday <span class="source-badge source-live">Stripe</span></div>
+        <div class="kpi-label">Revenue Today vs Yesterday <span class="source-badge" style="background:rgba(255,255,255,0.15);color:white;">Stripe + Whop</span></div>
         <div style="display:flex;align-items:flex-end;gap:16px;margin-top:4px;">
           <div>
             <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.6);margin-bottom:2px;">Today</div>
@@ -2345,10 +2350,19 @@ function updateCombinedRevenue() {
   const stripeTotal = lastStripe?.revenue?.total || 0;
   const whopTotal   = lastWhop?.revenue?.total   || 0;
   const combined    = stripeTotal + whopTotal;
+
+  // Revenue tab combined boxes
   setText('combined-revenue',      formatMoney(combined));
   setText('combined-revenue-sub',  `Whop ${formatMoney(whopTotal)} + Stripe ${formatMoney(stripeTotal)}`);
   setText('stripe-combined-total', formatMoney(stripeTotal));
   setText('stripe-combined-sub',   `${lastStripe?.revenue?.count || 0} transactions`);
+
+  // Overview tab first box
+  setText('ov-total-revenue',     formatMoney(combined));
+  const parts = [];
+  if (stripeTotal) parts.push(`Stripe ${formatMoney(stripeTotal)}`);
+  if (whopTotal)   parts.push(`Whop ${formatMoney(whopTotal)}`);
+  setText('ov-total-revenue-sub', parts.length ? parts.join(' · ') : 'selected period');
 
   // Rebuild DOW averages whenever either source updates
   if (lastStripe || lastWhop) renderDOWAverages();
