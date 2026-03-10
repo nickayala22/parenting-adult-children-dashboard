@@ -1083,43 +1083,98 @@ header {
       </div>
     </div>
 
-    <!-- Whop detail row -->
-    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px;">
+    <!-- Whop detail row — mirrors Stripe layout -->
+    <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:18px;">
+      <div class="kpi accent">
+        <div class="kpi-label">Gross Revenue <span class="source-badge" style="background:rgba(255,255,255,0.15);color:white;">Whop</span></div>
+        <div class="kpi-value" id="whop-gross">—</div>
+        <div class="kpi-delta" style="color:rgba(255,255,255,0.7);" id="whop-gross-sub">— transactions</div>
+      </div>
       <div class="kpi">
-        <div class="kpi-label">Whop Net Revenue</div>
+        <div class="kpi-label">Net After Fees</div>
         <div class="kpi-value green" id="whop-net">—</div>
-        <div class="kpi-delta delta-neutral" id="whop-net-sub">after refunds</div>
+        <div class="kpi-delta delta-neutral" id="whop-net-sub">Fees: —</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">Whop Active Members</div>
-        <div class="kpi-value" id="whop-members">—</div>
+        <div class="kpi-label">Whop Fees</div>
+        <div class="kpi-value" style="color:var(--amber);" id="whop-fees">—</div>
+        <div class="kpi-delta delta-neutral" id="whop-fees-pct-sub">— of gross</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Refunds</div>
+        <div class="kpi-value red" id="whop-refunds">—</div>
+        <div class="kpi-delta delta-neutral" id="whop-refund-count">— refunds</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Active Members</div>
+        <div class="kpi-value" id="whop-members" style="color:var(--plum);">—</div>
         <div class="kpi-delta delta-neutral">currently active</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">Whop Refunds</div>
-        <div class="kpi-value" style="color:var(--rose);" id="whop-refunds">—</div>
-        <div class="kpi-delta delta-neutral" id="whop-refunds-sub">selected period</div>
       </div>
     </div>
 
-    <!-- Whop recent payments -->
+    <!-- Whop chart + breakdown — mirrors Stripe grid-2 -->
     <div class="grid-2" style="margin-bottom:18px;">
       <div class="card">
-        <div class="card-title">Whop Recent Payments <span class="source-badge source-live">Whop</span></div>
-        <div class="data-table-wrap">
-        <table class="data-table">
-          <thead><tr><th>Customer</th><th>Plan</th><th>Amount</th><th>Date</th></tr></thead>
-          <tbody id="whopPaymentsTable">
-            <tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
-          </tbody>
-        </table>
+        <div class="card-title">Daily Transactions <span class="source-badge source-live">Whop</span></div>
+        <div class="chart-wrap" style="height:220px;">
+          <canvas id="whopDailyChart"></canvas>
         </div>
       </div>
       <div class="card">
-        <div class="card-title">Whop Daily Revenue <span class="source-badge source-live">Whop</span></div>
-        <div class="chart-wrap" style="height:180px;">
-          <canvas id="whopDailyChart"></canvas>
+        <div class="card-title">Revenue Breakdown <span class="source-badge source-live">Whop</span></div>
+        <div style="padding:10px 0;">
+          <div class="funnel-step">
+            <div class="funnel-label-row">
+              <span class="funnel-name">Gross Revenue</span>
+              <div class="funnel-nums"><span class="funnel-count" id="whop-gross-bar-val">—</span></div>
+            </div>
+            <div class="funnel-bar-bg"><div class="funnel-bar" style="width:100%;background:var(--plum);opacity:0.7;"></div></div>
+          </div>
+          <div class="funnel-step" style="margin-top:12px;">
+            <div class="funnel-label-row">
+              <span class="funnel-name">Whop Fees</span>
+              <div class="funnel-nums"><span class="funnel-count" id="whop-fees-bar-val" style="font-size:17px;color:var(--amber);">—</span><span class="funnel-pct" id="whop-fees-pct" style="color:var(--amber);">—</span></div>
+            </div>
+            <div class="funnel-bar-bg"><div class="funnel-bar" id="whop-fees-bar" style="width:0%;background:linear-gradient(90deg,rgba(176,122,42,0.15),var(--amber));"></div></div>
+          </div>
+          <div class="funnel-step" style="margin-top:12px;">
+            <div class="funnel-label-row">
+              <span class="funnel-name">Refunds</span>
+              <div class="funnel-nums"><span class="funnel-count" id="whop-refund-bar-val" style="font-size:17px;">—</span><span class="funnel-pct" id="whop-refund-pct" style="color:var(--red);">—</span></div>
+            </div>
+            <div class="funnel-bar-bg"><div class="funnel-bar rose-bar" id="whop-refund-bar" style="width:0%;"></div></div>
+          </div>
+          <div class="funnel-step" style="margin-top:12px;">
+            <div class="funnel-label-row">
+              <span class="funnel-name">Net to Bank</span>
+              <div class="funnel-nums"><span class="funnel-count" id="whop-net-bar-val">—</span><span class="funnel-pct" id="whop-net-pct" style="color:var(--green);">—</span></div>
+            </div>
+            <div class="funnel-bar-bg"><div class="funnel-bar green-bar" id="whop-net-bar" style="width:0%;"></div></div>
+          </div>
         </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">Avg Transaction</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:var(--plum);" id="whop-avg-tx">—</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">Keep Rate</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:var(--green);" id="whop-keep-rate">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Whop recent payments table -->
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-title">Recent Transactions <span class="source-badge source-live">Whop Live</span></div>
+      <div class="data-table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Customer</th><th>Plan</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody id="whopPaymentsTable">
+          <tr><td colspan="5" style="color:var(--text-muted);padding:16px 0;">Loading...</td></tr>
+        </tbody>
+      </table>
       </div>
     </div>
 
@@ -2184,39 +2239,79 @@ async function fetchWhop() {
 }
 
 function renderWhopData(d) {
-  const rev     = d.revenue || {};
-  const refunds = d.refunds || {};
+  const rev     = d.revenue  || {};
+  const refunds = d.refunds  || {};
+  const gross   = rev.total  || 0;
+  const count   = rev.count  || 0;
+  const refAmt  = refunds.total || 0;
+  const refCnt  = refunds.count || 0;
 
-  // Individual Whop boxes
-  setText('whop-combined-total', formatMoney(rev.total || 0));
-  setText('whop-combined-sub',   `${rev.count || 0} transactions`);
-  setText('whop-net',            formatMoney(rev.net   || 0));
-  setText('whop-net-sub',        refunds.count > 0 ? `${refunds.count} refund${refunds.count !== 1 ? 's' : ''}` : 'no refunds');
-  setText('whop-members',        d.memberships?.active ?? '—');
-  setText('whop-refunds',        formatMoney(refunds.total || 0));
-  setText('whop-refunds-sub',    `${refunds.count || 0} refunds`);
+  // Whop charges ~3% platform fee (no per-transaction fee like Stripe)
+  // We don't get fee data from API so we estimate at 3%
+  const WHOP_FEE_RATE = 0.03;
+  const estFees = gross * WHOP_FEE_RATE;
+  const netRev  = gross - estFees - refAmt;
+  const keepPct = gross > 0 ? Math.round((netRev / gross) * 100) : 0;
+  const avgTx   = count > 0 ? gross / count : 0;
+  const feesPct = gross > 0 ? Math.round((estFees / gross) * 100) : 0;
+  const refPct  = gross > 0 ? Math.round((refAmt  / gross) * 100) : 0;
+  const netPct  = gross > 0 ? Math.round((netRev  / gross) * 100) : 0;
 
-  // Combined total — add to whatever Stripe has
+  // KPI row
+  setText('whop-gross',         formatMoney(gross));
+  setText('whop-gross-sub',     `${count} transaction${count !== 1 ? 's' : ''}`);
+  setText('whop-net',           formatMoney(netRev));
+  setText('whop-net-sub',       `Fees: ${formatMoney(estFees)} (est.)`);
+  setText('whop-fees',          formatMoney(estFees));
+  setText('whop-fees-pct-sub',  `~${feesPct}% of gross (est.)`);
+  setText('whop-refunds',       formatMoney(refAmt));
+  setText('whop-refund-count',  `${refCnt} refund${refCnt !== 1 ? 's' : ''}`);
+  setText('whop-members',       d.memberships?.active ?? '—');
+
+  // Combined total box
+  setText('whop-combined-total', formatMoney(gross));
+  setText('whop-combined-sub',   `${count} transactions`);
+
+  // Funnel bars
+  setText('whop-gross-bar-val',  formatMoney(gross));
+  setText('whop-fees-bar-val',   formatMoney(estFees));
+  setText('whop-fees-pct',       `${feesPct}%`);
+  setText('whop-refund-bar-val', formatMoney(refAmt));
+  setText('whop-refund-pct',     refPct > 0 ? `${refPct}%` : '');
+  setText('whop-net-bar-val',    formatMoney(netRev));
+  setText('whop-net-pct',        `${netPct}%`);
+  setText('whop-avg-tx',         formatMoney(avgTx));
+  setText('whop-keep-rate',      `${keepPct}%`);
+
+  const setBarWidth = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
+  setBarWidth('whop-fees-bar',   feesPct);
+  setBarWidth('whop-refund-bar', refPct);
+  setBarWidth('whop-net-bar',    netPct);
+
+  // Update combined total
   updateCombinedRevenue();
 
   // Daily chart
   if (charts.whopDaily) charts.whopDaily.destroy();
   const wCtx = document.getElementById('whopDailyChart');
   if (wCtx && d.dailyRevenue) {
-    const sorted = Object.entries(d.dailyRevenue).sort((a,b) => a[0].localeCompare(b[0]));
+    const sorted = Object.entries(d.dailyRevenue)
+      .sort((a,b) => a[0].localeCompare(b[0]))
+      .slice(-30); // last 30 days
     charts.whopDaily = new Chart(wCtx, {
       type: 'bar',
       data: {
         labels: sorted.map(([d]) => d.slice(5)),
         datasets: [{ label: 'Revenue', data: sorted.map(([,v]) => v),
-          backgroundColor: 'rgba(124,92,191,0.5)', borderColor: '#7c5cbf', borderWidth: 1, borderRadius: 3 }]
+          backgroundColor: 'rgba(124,92,191,0.5)', borderColor: '#7c5cbf',
+          borderWidth: 1, borderRadius: 3 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#5e5470', maxTicksLimit: 10 } },
-          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { callback: v => '$' + v, color: '#5e5470' } }
+          x: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#8a7e98', maxTicksLimit: 10 } },
+          y: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v), color: '#8a7e98' } }
         }
       }
     });
@@ -2227,20 +2322,23 @@ function renderWhopData(d) {
   if (tbody) {
     const payments = d.recentPayments || [];
     if (!payments.length) {
-      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);padding:16px 0;">No payments in this period</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-muted);padding:16px 0;">No payments in this period</td></tr>';
     } else {
       tbody.innerHTML = payments.map(p => {
         const dt = p.created ? new Date(p.created * 1000).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '—';
         const statusColor = p.status === 'paid' ? 'var(--green)' : p.status === 'refunded' ? 'var(--rose)' : 'var(--text-muted)';
         return `<tr>
-          <td style="font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.customer}</td>
-          <td style="color:var(--text-muted);font-size:11px;">${p.plan || '—'}</td>
-          <td style="font-family:'Cormorant Garamond',serif;font-size:18px;color:${statusColor};">${formatMoney(p.amount)}</td>
+          <td style="font-weight:500;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.customer}</td>
+          <td style="color:var(--text-muted);font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.plan || '—'}</td>
+          <td style="font-family:'Cormorant Garamond',serif;font-size:18px;">${formatMoney(p.amount)}</td>
           <td style="color:var(--text-muted);">${dt}</td>
+          <td style="color:${statusColor};font-size:11px;font-weight:500;text-transform:capitalize;">${p.status}</td>
         </tr>`;
       }).join('');
     }
   }
+
+  if (lastStripe || lastWhop) renderDOWAverages();
 }
 
 function updateCombinedRevenue() {
