@@ -2192,25 +2192,8 @@ function renderStripeData(d) {
   setText('ov-revenue',     formatMoney(gross));
   setText('ov-revenue-sub', `Net: ${formatMoney(trueNet)} · ${refCount} refund${refCount !== 1 ? 's' : ''}`);
 
-  // Today vs Yesterday revenue
-  const revToday     = d.revenue?.today     ?? 0;
-  const revYesterday = d.revenue?.yesterday ?? 0;
-  setText('ov-revenue-today',     formatMoney(revToday));
-  setText('ov-revenue-yesterday', formatMoney(revYesterday));
-  const rdEl = document.getElementById('ov-revenue-delta');
-  if (rdEl) {
-    if (revYesterday === 0 && revToday === 0) {
-      rdEl.innerHTML = '';
-    } else if (revYesterday === 0) {
-      rdEl.innerHTML = `<span class="delta-up" style="color:#7effc4;">new</span>`;
-    } else {
-      const diff = revToday - revYesterday;
-      const pct  = Math.round(Math.abs(diff) / revYesterday * 100);
-      if (diff > 0)      rdEl.innerHTML = `<span class="delta-up" style="color:#7effc4;">+${formatMoney(diff)} (${pct}%)</span>`;
-      else if (diff < 0) rdEl.innerHTML = `<span class="delta-down" style="color:#ffaaaa;">${formatMoney(diff)} (${pct}%)</span>`;
-      else               rdEl.innerHTML = `<span class="delta-flat" style="color:rgba(255,255,255,0.4);">flat</span>`;
-    }
-  }
+  // Today vs Yesterday — now handled by updateCombinedRevenue()
+  updateCombinedRevenue();
 }
 
 // ── LOAD ALL ──
@@ -2347,9 +2330,15 @@ function renderWhopData(d) {
 }
 
 function updateCombinedRevenue() {
-  const stripeTotal = lastStripe?.revenue?.total || 0;
-  const whopTotal   = lastWhop?.revenue?.total   || 0;
-  const combined    = stripeTotal + whopTotal;
+  const stripeTotal     = lastStripe?.revenue?.total     || 0;
+  const whopTotal       = lastWhop?.revenue?.total       || 0;
+  const stripeToday     = lastStripe?.revenue?.today     || 0;
+  const whopToday       = lastWhop?.revenue?.today       || 0;
+  const stripeYesterday = lastStripe?.revenue?.yesterday || 0;
+  const whopYesterday   = lastWhop?.revenue?.yesterday   || 0;
+  const combined        = stripeTotal + whopTotal;
+  const combinedToday   = stripeToday + whopToday;
+  const combinedYday    = stripeYesterday + whopYesterday;
 
   // Revenue tab combined boxes
   setText('combined-revenue',      formatMoney(combined));
@@ -2358,11 +2347,29 @@ function updateCombinedRevenue() {
   setText('stripe-combined-sub',   `${lastStripe?.revenue?.count || 0} transactions`);
 
   // Overview tab first box
-  setText('ov-total-revenue',     formatMoney(combined));
+  setText('ov-total-revenue', formatMoney(combined));
   const parts = [];
   if (stripeTotal) parts.push(`Stripe ${formatMoney(stripeTotal)}`);
   if (whopTotal)   parts.push(`Whop ${formatMoney(whopTotal)}`);
   setText('ov-total-revenue-sub', parts.length ? parts.join(' · ') : 'selected period');
+
+  // Overview today vs yesterday — combined
+  setText('ov-revenue-today',     formatMoney(combinedToday));
+  setText('ov-revenue-yesterday', formatMoney(combinedYday));
+  const rdEl = document.getElementById('ov-revenue-delta');
+  if (rdEl) {
+    if (combinedYday === 0 && combinedToday === 0) {
+      rdEl.innerHTML = '';
+    } else if (combinedYday === 0) {
+      rdEl.innerHTML = `<span class="delta-up" style="color:#7effc4;">new</span>`;
+    } else {
+      const diff = combinedToday - combinedYday;
+      const pct  = Math.round(Math.abs(diff) / combinedYday * 100);
+      if      (diff > 0) rdEl.innerHTML = `<span class="delta-up" style="color:#7effc4;">+${formatMoney(diff)} (${pct}%)</span>`;
+      else if (diff < 0) rdEl.innerHTML = `<span class="delta-down" style="color:#ffaaaa;">${formatMoney(diff)} (${pct}%)</span>`;
+      else               rdEl.innerHTML = `<span class="delta-flat" style="color:rgba(255,255,255,0.4);">flat</span>`;
+    }
+  }
 
   // Rebuild DOW averages whenever either source updates
   if (lastStripe || lastWhop) renderDOWAverages();
